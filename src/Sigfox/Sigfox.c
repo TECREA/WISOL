@@ -25,9 +25,10 @@ Puede que pase...
 -hacer test con unity
 -Hacer funcion para reiniciar el modulo
 
-*/
+ */
 
 #include "Sigfox.h"
+
 /*#include <stdio.h>*/
 /** Private Prototypes************************************************************************************************************************ */
 
@@ -103,8 +104,8 @@ WSSFM1XRX_Return_t WSSFM1XRX_Init(WSSFM1XRXConfig_t *obj, DigitalFcn_t Reset, Di
  * 			<< WSSFM1XRX_WAITING >> if the time has not expired
  */
 WSSFM1XRX_Return_t WSSFM1XRX_Wait_NonBlock(WSSFM1XRXConfig_t *obj, uint32_t msec){
-		static uint8_t RetValue;
-		static uint32_t WSSFM1XRX_StartTick = 0;
+	static uint8_t RetValue;
+	static uint32_t WSSFM1XRX_StartTick = 0;
 	if(obj->State_W == WSSFM1XRX_W_IDLE ){
 		RetValue = WSSFM1XRX_WAITING ;
 		WSSFM1XRX_StartTick = 0;
@@ -116,7 +117,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_Wait_NonBlock(WSSFM1XRXConfig_t *obj, uint32_t msec
 		RetValue = WSSFM1XRX_TIMEOUT ;
 	}else RetValue = WSSFM1XRX_WAITING;
 	return RetValue;
-	
+
 }
 
 /**
@@ -130,9 +131,9 @@ WSSFM1XRX_Return_t WSSFM1XRX_Wait_NonBlock(WSSFM1XRXConfig_t *obj, uint32_t msec
  * 			<< WSSFM1XRX_TIMEOUT >> if the time has expired
  */
 WSSFM1XRX_Return_t WSSFM1XRX_Wait_Block(WSSFM1XRXConfig_t *obj, uint32_t msec){
-    while( WSSFM1XRX_WAITING == WSSFM1XRX_Wait_NonBlock(obj, msec) ){ 
+	while( WSSFM1XRX_WAITING == WSSFM1XRX_Wait_NonBlock(obj, msec) ){
 	}
-    return WSSFM1XRX_TIMEOUT ;
+	return WSSFM1XRX_TIMEOUT ;
 }
 
 /**
@@ -234,11 +235,11 @@ WSSFM1XRX_Return_t WSSFM1XRX_GetPAC(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t 
  * 			WSSFM1XRX_FAILURE
  * 			WSSFM1XRX_WAITING
  */
- WSSFM1XRX_Return_t WSSFM1XRX_GetVoltage(WSSFM1XRXConfig_t *obj, WSSFM1XRX_WaitMode_t Wait,uint16_t *mVolt ){
+WSSFM1XRX_Return_t WSSFM1XRX_GetVoltage(WSSFM1XRXConfig_t *obj, WSSFM1XRX_WaitMode_t Wait,uint16_t *mVolt ){
 	char mVolStr[10];
 	char *ptr = NULL;
 	WSSFM1XRX_Return_t RetValue;
-	
+
 	RetValue =	WSSFM1XRX_GetRespNoexpected(obj,Wait,"AT$V?\r",mVolStr);
 	*mVolt = strtol((const char*)mVolStr , &ptr ,BASE_DECIMAL);
 	return RetValue;
@@ -262,16 +263,17 @@ WSSFM1XRX_Return_t WSSFM1XRX_SendRawMessage(WSSFM1XRXConfig_t *obj,char* Payload
 	}
 	if(ExpectedResponse != NULL){  /*Si la respuesta no es la esperada se queda esperando pero no envia hasta que reinicie obj->State_Api */
 		RetValue = WSSFM1XRX_WaitForResponse(obj,ExpectedResponse,Wait,msec);
-	
+
 	}else RetValue = Wait(obj,WSSFM1XRX_GENERAL_TIME_DELAY_RESP) ;
+
 	if(WSSFM1XRX_TIMEOUT == RetValue || WSSFM1XRX_OK_RESPONSE == RetValue){  /*para que funcione block or non block*/
 		if( obj->RxReady ){ 
 			if(BuffStr != NULL) strcpy((char*)BuffStr, (char*)obj->RxFrame) ;
-			return RetValue = WSSFM1XRX_OK_RESPONSE;
+			RetValue = WSSFM1XRX_OK_RESPONSE;
 		}else {
-			if(Payload != NULL)	return RetValue = WSSFM1XRX_FAILURE;
+			if(Payload != NULL)	RetValue = WSSFM1XRX_FAILURE;
 		}
-	obj->State_Api = WSSFM1XRX_IDLE;
+		obj->State_Api = WSSFM1XRX_IDLE;
 	}
 	return RetValue;
 }
@@ -298,7 +300,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_AskChannels(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMo
 	}
 	return RetVal;
 }
- 
+
 /**  Revisar DOC-------- 
  * @brief Function verificate c hannels of the transceiver.
  * @note Example :
@@ -363,7 +365,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_AskFrequencyUL(WSSFM1XRXConfig_t *obj,WSSFM1XRX_Wai
 	char FreqStr[10];
 	char *ptr = NULL;
 	WSSFM1XRX_Return_t RetValue;
-	
+
 	RetValue =	WSSFM1XRX_GetRespNoexpected(obj,Wait,"AT$IF?\r",FreqStr);
 	*Frequency = strtol((const char*)FreqStr , &ptr ,BASE_DECIMAL);
 	return RetValue;
@@ -402,14 +404,16 @@ WSSFM1XRX_Return_t WSSFM1XRX_SaveParameters(WSSFM1XRXConfig_t *obj, WSSFM1XRX_Wa
  */
 WSSFM1XRX_Return_t WSSFM1XRX_SendMessage(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait, void* data, uint8_t size, uint8_t eDownlink){
 	char str[WSSFM1XRX_MAX_DATA_SIZE] = {0};
-	char Frame[35] = {0};
+	char Frame[37] = {0};
+
 	uint32_t timeWait = WSSFM1XRX_SEND_MESSAGE_TIME_DELAY_RESP;
 	WSSFM1XRX_BuildFrame(str, data, size);
 	memset(Frame,0,sizeof(Frame));
 	/*con Downlink no transmite bien EN CONSOLA*/
 	sprintf(Frame,"AT$SF=%s%s",str,(  obj->DownLink = eDownlink )?  ",1\r" : "\r");  /*Modificar despues, revisar salida de mensaje*/
-	timeWait = eDownlink ? WSSFM1XRX_SEND_MESSAGE_TIME_DELAY_RESP : WSSFM1XRX_SEND_MESSAGE_TIME_DELAY_RESP; /*WSSFM1XRX_DL_TIMEOUT*/
-	return WSSFM1XRX_SendRawMessage(obj,Frame,"OK",NULL,Wait,timeWait); 
+	strcpy(obj->TxFrame,Frame);
+	timeWait = eDownlink ? WSSFM1XRX_DL_TIMEOUT : WSSFM1XRX_SEND_MESSAGE_TIME_DELAY_RESP; /*WSSFM1XRX_DL_TIMEOUT*/
+	return WSSFM1XRX_SendRawMessage(obj,Frame,"OK",NULL,Wait,timeWait);
 }
 
 /**
@@ -422,7 +426,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_SendMessage(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMo
  * @return void.
  */
 void WSSFM1XRX_ISRRX(WSSFM1XRXConfig_t *obj, const char RxChar){
-	/*if(RxChar < CHAR_PRINT_BELOW  || RxChar > CHAR_PRINT_ABOVE) return ;*/  /*Char no print*/
+	if(RxChar < CHAR_PRINT_BELOW  || RxChar > CHAR_PRINT_ABOVE) return ;  /*Char no print*/
 	if(obj->RxReady) return; /* B_uffer reveived*/
 	obj->RxFrame[obj->RxIndex++] = RxChar;
 	if (obj->RxIndex>= obj->SizeBuffRx -1) obj->RxIndex=0;
@@ -430,8 +434,8 @@ void WSSFM1XRX_ISRRX(WSSFM1XRXConfig_t *obj, const char RxChar){
 	if (RxChar =='\r'){
 		/*  Check if there is a downlink request */
 		if(!obj->DownLink){
-		    obj->RxIndex = 0;
-		    obj->RxReady = SF_TRUE; /* Framed completed*/
+			obj->RxIndex = 0;
+			obj->RxReady = SF_TRUE; /* Framed completed*/
 		}else
 			obj->DownLink = 0; /* Clear the downlink request */
 	}
@@ -463,39 +467,39 @@ WSSFM1XRX_Return_t WSSFM1XRX_MatchResponse(WSSFM1XRXConfig_t *obj, char *expecte
  * @return Operation result in the form WSSFM1XRX_DL_Return_t.
  */
 WSSFM1XRX_DL_Return_t DL_DiscriminateDownLink(WSSFM1XRXConfig_t* obj){
-    uint8_t* payLoadHead;
-    uint8_t* payLoadTail;
-    uint8_t byteIndex = WSSFM1XRX_DL_BYTES_OFFSET;
-   /* uint8_t numericFrame[WSSFM1XRX_DL_PAYLOAD_SYZE];*/
-    uint8_t byteStr[WSSFM1XRX_DL_BYTE_SIZE + 1] = {0};
+	uint8_t* payLoadHead;
+	uint8_t* payLoadTail;
+	uint8_t byteIndex = WSSFM1XRX_DL_BYTES_OFFSET;
+	/* uint8_t numericFrame[WSSFM1XRX_DL_PAYLOAD_SYZE];*/
+	uint8_t byteStr[WSSFM1XRX_DL_BYTE_SIZE + 1] = {0};
 
-    /* Get payload offset */
-    payLoadHead = (uint8_t *)strstr((const char*)obj->RxFrame, "RX");
+	/* Get payload offset */
+	payLoadHead = (uint8_t *)strstr((const char*)obj->RxFrame, "RX");
 
-    if(!payLoadHead)
-        return WSSFM1XRX_DL_HEAD_ERROR;
+	if(!payLoadHead)
+		return WSSFM1XRX_DL_HEAD_ERROR;
 
-    /* Check payload length */
-    payLoadTail = (uint8_t *)strstr((const char*)payLoadHead, "\r");
+	/* Check payload length */
+	payLoadTail = (uint8_t *)strstr((const char*)payLoadHead, "\r");
 
-    if(!payLoadTail)
-        return WSSFM1XRX_DL_TAIL_ERROR;
+	if(!payLoadTail)
+		return WSSFM1XRX_DL_TAIL_ERROR;
 
-    if((payLoadTail - payLoadHead) != WSSFM1XRX_DL_PAYLOAD_LENGTH)
-        return WSSFM1XRX_DL_LENGTH_ERROR;
+	if((payLoadTail - payLoadHead) != WSSFM1XRX_DL_PAYLOAD_LENGTH)
+		return WSSFM1XRX_DL_LENGTH_ERROR;
 
-    /* Convert frame to numeric values */
+	/* Convert frame to numeric values */
 	uint8_t i;
-    for( i = 0; i < WSSFM1XRX_DL_PAYLOAD_SYZE; i++){
+	for( i = 0; i < WSSFM1XRX_DL_PAYLOAD_SYZE; i++){
 
-        /* Copy byte strings an convert them to numbers */
-        strncpy((char *)byteStr, (const char *)(payLoadHead + byteIndex), WSSFM1XRX_DL_BYTE_SIZE);
-        obj->DL_NumericFrame[i] = (uint8_t)strtol((const char *)byteStr, NULL, 16);
-        byteIndex += WSSFM1XRX_DL_BYTES_OFFSET;
-    }
+		/* Copy byte strings an convert them to numbers */
+		strncpy((char *)byteStr, (const char *)(payLoadHead + byteIndex), WSSFM1XRX_DL_BYTE_SIZE);
+		obj->DL_NumericFrame[i] = (uint8_t)strtol((const char *)byteStr, NULL, 16);
+		byteIndex += WSSFM1XRX_DL_BYTES_OFFSET;
+	}
 
 
-    return ( NULL != obj->DiscrimateFrameTypeFcn )? obj->DiscrimateFrameTypeFcn(obj) : WSSFM1XRX_DL_DISCRIMINATE_ERROR;
+	return ( NULL != obj->DiscrimateFrameTypeFcn )? obj->DiscrimateFrameTypeFcn(obj) : WSSFM1XRX_DL_DISCRIMINATE_ERROR;
 }
 
 /*Private Functions ********************************************************************************************************************************/
@@ -503,7 +507,7 @@ static void WSSFM1XRX_StringTX(WSSFM1XRXConfig_t *obj, char* WSSFM1XRX_String){
 	while(*WSSFM1XRX_String) {
 		obj->TX_WSSFM1XRX(NULL,*WSSFM1XRX_String);
 		WSSFM1XRX_String++;
-		}
+	}
 }
 
 /*Private Functions ***********************************************************************************************************************************************/
@@ -541,27 +545,27 @@ static void WSSFM1XRX_BuildFrame(char* str, void* data, uint8_t size){
  * @brief Function wait for response expected.
  */
 static WSSFM1XRX_Return_t WSSFM1XRX_WaitForResponse(WSSFM1XRXConfig_t *obj , char *ExpectedResponse, WSSFM1XRX_WaitMode_t Wait ,uint32_t msec){
-   uint8_t retvalue = WSSFM1XRX_NONE;
-    if( WSSFM1XRX_MatchResponse(obj,ExpectedResponse)  == WSSFM1XRX_RSP_NOMATCH ){  /*mientras no sea resp = */
-       	
-	   if( (Wait != WSSFM1XRX_Wait_Block) && (Wait != WSSFM1XRX_Wait_NonBlock) ){
-		   retvalue = Wait(obj,msec);
-		   retvalue = WSSFM1XRX_MatchResponse(obj, ExpectedResponse);
-	   }else  retvalue =  Wait(obj,msec); 	
-       if(retvalue == WSSFM1XRX_TIMEOUT){  /*Delay blocking*/
-		   return  WSSFM1XRX_MatchResponse(obj, ExpectedResponse);
-       }
-       return retvalue;   /*Delay NonBlocking*/
-    }
-    return WSSFM1XRX_OK_RESPONSE;
+	uint8_t retvalue = WSSFM1XRX_NONE;
+	if( WSSFM1XRX_MatchResponse(obj,ExpectedResponse)  == WSSFM1XRX_RSP_NOMATCH ){  /*mientras no sea resp = */
+
+		if( (Wait != WSSFM1XRX_Wait_Block) && (Wait != WSSFM1XRX_Wait_NonBlock) ){
+			retvalue = Wait(obj,msec);
+			retvalue = WSSFM1XRX_MatchResponse(obj, ExpectedResponse);
+		}else  retvalue =  Wait(obj,msec);
+		if(retvalue == WSSFM1XRX_TIMEOUT){  /*Delay blocking*/
+			return  WSSFM1XRX_MatchResponse(obj, ExpectedResponse);
+		}
+		return retvalue;   /*Delay NonBlocking*/
+	}
+	return WSSFM1XRX_OK_RESPONSE;
 }
 
 /*Nible(4bits) decimal to hex string***/
 
 char NibbletoX(uint8_t value){
-    char ch;
-    ch = (char)(value & 0x0F) + '0';
-    return (ch > '9')? ch+7u : ch;
+	char ch;
+	ch = (char)(value & 0x0F) + '0';
+	return (ch > '9')? ch+7u : ch;
 }
 
 
@@ -570,7 +574,7 @@ char NibbletoX(uint8_t value){
  * @param obj Structure containing all data from the Sigfox module.
  * @param Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
  * @param Pointer to char *  containing Command AT to send the Sigfox module.
-  * @param Pointer to char *  to store the response of the sigfox module.
+ * @param Pointer to char *  to store the response of the sigfox module.
  * @param eDownlink downlink enable o disable (0/1)
  * 
  * @return WSSFM1XRX_Return_t.
@@ -586,8 +590,8 @@ WSSFM1XRX_Return_t WSSFM1XRX_GetRespNoexpected(WSSFM1XRXConfig_t *obj,WSSFM1XRX_
 	if(WSSFM1XRX_TIMEOUT == RetValue){
 		if( obj->RxReady ){  
 			if(BuffStr != NULL ) strcpy((char*)BuffStr, (char*)obj->RxFrame) ; /*frame stored in RxFrame*/
-			return RetValue = WSSFM1XRX_OK_RESPONSE;
-		}else return RetValue = WSSFM1XRX_FAILURE;
+			RetValue = WSSFM1XRX_OK_RESPONSE;
+		}else RetValue = WSSFM1XRX_FAILURE;
 		obj->State_Api = WSSFM1XRX_IDLE;
 	}
 	return RetValue;

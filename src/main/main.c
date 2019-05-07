@@ -77,7 +77,7 @@ int main(int argc, char** argv) {
     uint32_t x = 0;
     char* str = NULL;
     char ID[10]; 
-    char PAC[12];
+    char PAC[18];
     uint16_t voltaje;
     x = WSSFM1XRX_Init( &SigfoxConfig,rst,rst2,txsigfox ,UART_SIGFOX_RX ,WSSFM1XRX_UL_RCZ4,NULL,GetTick_ms,respuesta,sizeof(respuesta),respuesta,sizeof(respuesta));
     pthread_create(&hilo, NULL, hilo_time, NULL);
@@ -96,7 +96,7 @@ int main(int argc, char** argv) {
 
         /* if(retvalue == 255) */
         /*retvalue = WSSFM1XRX_GetID(&SigfoxConfig, (WSSFM1XRX_WaitMode_t)WSSFM1XRX_Wait_Block, ID);*/
-        retvalue = WSSFM1XRX_GetPAC(&SigfoxConfig, (WSSFM1XRX_WaitMode_t)WSSFM1XRX_Wait_NonBlock, PAC);
+        /*retvalue = WSSFM1XRX_GetPAC(&SigfoxConfig, (WSSFM1XRX_WaitMode_t)WSSFM1XRX_Wait_NonBlock, PAC);*/
         /*retvalue = WSSFM1XRX_GetVoltage(&SigfoxConfig, (WSSFM1XRX_WaitMode_t)WSSFM1XRX_Wait_Block, &voltaje);*/
         /* retvalue   = WSSFM1XRX_AskChannels(&SigfoxConfig,(WSSFM1XRX_WaitMode_t)WSSFM1XRX_Wait_NonBlock,PAC);*/
         /* retvalue = WSSFM1XRX_SaveParameters(&SigfoxConfig,(WSSFM1XRX_WaitMode_t)WSSFM1XRX_Wait_Block);*/
@@ -106,9 +106,19 @@ int main(int argc, char** argv) {
         /*retvalue     = WSSFM1XRX_ResetChannels(&SigfoxConfig,(WSSFM1XRX_WaitMode_t)WSSFM1XRX_Wait_Block);*/
         /*retvalue = WSSFM1XRX_AskFrequencyUL(&SigfoxConfig,(WSSFM1XRX_WaitMode_t)WSSFM1XRX_Wait_Block, &Freq );*/
 
+         puts("==========================================================ID ");
+        if( WSSFM1XRX_WAITING == WSSFM1XRX_GetID(&SigfoxConfig, (WSSFM1XRX_WaitMode_t)WSSFM1XRX_Wait_NonBlock, ID) ){
+        }
+        printf("==========================================================ID  %s\r\n", ID);
+
+        puts("==========================================================PAC ");
+        if( WSSFM1XRX_WAITING == WSSFM1XRX_GetPAC(&SigfoxConfig, (WSSFM1XRX_WaitMode_t)WSSFM1XRX_Wait_NonBlock, PAC)  ){
+        }
+        printf("==========================================================PAC  %s\r\n", PAC);
+
         if(WSSFM1XRX_OK_RESPONSE == retvalue){
             /*printf("ok response %d\r\n",Freq);*/
-            printf("==========================================================STRING  %s\r\n", PAC);
+           /* printf("==========================================================STRING  %s\r\n", PAC);*/
             /*printf("channels  %d %d\r\n", Channels.x,Channels.y);*/
         printf("WSSFM1XRX_OK_RESPONSE %d\r\n",retvalue);
             retvalue = 0;
@@ -145,6 +155,7 @@ void IncTick_ms(void){
    if( (tick_count % 40) == 0 ){
        EmulatedReceived((unsigned char*)"123456\r");
    }
+   if(tick_count >= 200) EmulatedReceived((unsigned char*)"444444444444444444444\r");
 }
 
 /*Wrappers a funciones para inicializar modulo*/

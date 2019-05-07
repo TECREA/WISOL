@@ -60,27 +60,34 @@
 /* Numeric frame offsets ---------------------------------------------------------*/
 #define WSSFM1XRX_DL_CTRLREG 0
 #define WSSFM1XRX_DL_TREP 2
-#define WSSFM1XRX_DL_P_ON_OFF  4 /*turn on off moto*/
+#define WSSFM1XRX_DL_P_ON_OFF  4 /*turn on off */
+
+
+/*legth buffer to transmition*/
+#define WSSFM1XRX_BUFF_TX_FRAME_LENGTH 32
+
+/*legth buffer to reception*/
+#define WSSFM1XRX_BUFF_RX_FRAME_LENGTH 37
 
 /*Delays for expected response wisol module------------------------------------------------*/
 
 /*Delay Time for WSSFM1XRX_SendMessage wisol module [ms]*/
-#define WSSFM1XRX_SEND_MESSAGE_TIME_DELAY_RESP	    100
+#define WSSFM1XRX_SEND_MESSAGE_TIME_DELAY_RESP	    6000
 
 /*GENERAL DELAY TIME FOR COMMANDS [ms]*/
-#define WSSFM1XRX_GENERAL_TIME_DELAY_RESP	200
+#define WSSFM1XRX_GENERAL_TIME_DELAY_RESP	500
 
 /*Delay Time for WSSFM1XRX_WakeUP wisol module [ms]*/
 #define WSSFM1XRX_WAKEUP_TIME_DELAY_PULSE	100
 
 /*Delay Time for waiting WSSFM1XRX_WakeUP wisol module start [ms]*/
-#define WSSFM1XRX_WAKEUP_WAIT_TIME_DELAY_RESP	100
+#define WSSFM1XRX_WAKEUP_WAIT_TIME_DELAY_RESP	300
 
 /*Delay Time for WSSFM1XRX_SLEEP wisol module [ms]*/
-#define WSSFM1XRX_SLEEP_TIME_DELAY_RESP	    100
+#define WSSFM1XRX_SLEEP_TIME_DELAY_RESP	    200
 
 /*GENERAL DELAY TIME FOR COMMANDS [ms]*/
-#define WSSFM1XRX_SEND_RAW_MESSAGE_TIME_DELAY_RESP	300
+#define WSSFM1XRX_SEND_RAW_MESSAGE_TIME_DELAY_RESP	1000
 
 /*For Strtol*/
 #define BASE_DECIMAL 10
