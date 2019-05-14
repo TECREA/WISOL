@@ -2,8 +2,8 @@
  * *******************************************************************************
  * @file WSSFM1XRX.h
  * @author julian bustamante
- * @version 1.2.0
- * @date April 18, 2019
+ * @version 1.3.0
+ * @date May 09, 2019
  * @brief Sigfox interface for the sigfox module. Interface
  * specific for module wisol SFM11R2D.
  *********************************************************************************/
@@ -75,7 +75,7 @@
 #define WSSFM1XRX_SEND_MESSAGE_TIME_DELAY_RESP	    6000
 
 /*GENERAL DELAY TIME FOR COMMANDS [ms]*/
-#define WSSFM1XRX_GENERAL_TIME_DELAY_RESP	500
+#define WSSFM1XRX_GENERAL_TIME_DELAY_RESP	1500
 
 /*Delay Time for WSSFM1XRX_WakeUP wisol module [ms]*/
 #define WSSFM1XRX_WAKEUP_TIME_DELAY_PULSE	100
@@ -84,7 +84,9 @@
 #define WSSFM1XRX_WAKEUP_WAIT_TIME_DELAY_RESP	300
 
 /*Delay Time for WSSFM1XRX_SLEEP wisol module [ms]*/
-#define WSSFM1XRX_SLEEP_TIME_DELAY_RESP	    200
+#define WSSFM1XRX_SLEEP_TIME_DELAY_RESP	    500
+
+#define WSSFM1XRX_SLEEP_TIME_RESET	       1000
 
 /*GENERAL DELAY TIME FOR COMMANDS [ms]*/
 #define WSSFM1XRX_SEND_RAW_MESSAGE_TIME_DELAY_RESP	1000
@@ -191,12 +193,36 @@ typedef enum{
 	WSSFM1XRX_FBlock 
 }WSSFM1XRX_FlagBlock_t;
 
+/** @brief enum status state wisol internal */
 typedef enum{
 	WSSFM1XRX_IDLE=0,
 	WSSFM1XRX_RUNNING,
 	WSSFM1XRX_W_IDLE,
 	WSSFM1XRX_W_RUNNING
 }Api_State_t;
+
+/** @brief enum status functions for user******************************************************
+ * */
+typedef enum{
+	WSSFM1XRX_STATUS_SLEEP = 0,
+	WSSFM1XRX_STATUS_WKUP,
+	WSSFM1XRX_STATUS_CHK_MODULE ,
+	WSSFM1XRX_STATUS_GET_VOLTAGE,
+	WSSFM1XRX_STATUS_CHANGE_FREQ_UL ,
+	WSSFM1XRX_STATUS_SAVE_PARM ,
+	WSSFM1XRX_STATUS_GET_ID,
+	WSSFM1XRX_STATUS_GET_PAC,
+	WSSFM1XRX_STATUS_MODULE_INITIALIZED,
+	WSSFM1XRX_STATUS_CHK_CHANNELS ,
+	WSSFM1XRX_STATUS_RST_CHANNELS ,
+	WSSFM1XRX_STATUS_SEND_MESSAGE , /*ENVIAR*/
+	WSSFM1XRX_STATUS_SENT_MESSAGE , /*ENVIADO*/
+	WSSFM1XRX_STATUS_IDLE,
+
+	WSSFM1XRX_STATUS_MODULE_NOT_INITIALIZED,
+	WSSFM1XRX_STATUS_IDLE_FOR_SEND_MESSAGE
+
+}WSSFM1XRX_Service_Status_t;
 
 /**Struct for store macro channnels sigfox module*/
 typedef struct{
@@ -217,7 +243,8 @@ typedef enum{
 	WSSFM1XRX_CHANN_OK, 			
 	WSSFM1XRX_CHANN_NO_OK, 		
 	WSSFM1XRX_DEFAULT,
-	WSSFM1XRX_FAILURE
+	WSSFM1XRX_FAILURE,
+	WSSFM1XRX_MAX_RETRIES_REACHED
 }WSSFM1XRX_Return_t;
 
 /*Struct  containing all data*/
@@ -225,7 +252,6 @@ typedef struct WSSFM1XRXConfig{
 	DigitalFcn_t RST;
 	DigitalFcn_t RST2;
 	TxFnc_t TX_WSSFM1XRX;
-	RxFnc_t RX_WSSFM1XRX;
 	TickReadFcn_t TICK_READ;
 	/*Decodificar trama numerica return*/
 	WSSFM1XRX_DL_Return_t (*DiscrimateFrameTypeFcn)(struct WSSFM1XRXConfig* );	 /*as� por que depende de la misma estructura*/
@@ -242,6 +268,8 @@ typedef struct WSSFM1XRXConfig{
 	uint8_t DL_NumericFrame[WSSFM1XRX_DL_PAYLOAD_SYZE];
 	Api_State_t State_W;
 	Api_State_t State_Api;
+	uint8_t NumberRetries;
+	uint8_t MaxNumberRetries;
 }WSSFM1XRXConfig_t;
 
 
@@ -264,7 +292,7 @@ typedef WSSFM1XRX_Return_t (*WSSFM1XRX_WaitMode_t)(WSSFM1XRXConfig_t* ,uint32_t)
  * @param obj Structure containing all data from the Wisol module.
  * @return Operation result in the form WSSFM1XRX_Return_t.
  */
-WSSFM1XRX_Return_t WSSFM1XRX_Init(WSSFM1XRXConfig_t *obj, DigitalFcn_t Reset, DigitalFcn_t Reset2, TxFnc_t Tx_Wssfm1xrx, RxFnc_t Rx_Wssfm1xrx,WSSFM1XRX_FreqUL_t Frequency_Tx, WSSFM1XRX_DL_Return_t (*DiscrimateFrameTypeFCN)(struct WSSFM1XRXConfig* ) ,TickReadFcn_t TickRead,char* BuffRxframe , uint8_t SizeBuffRx, char* BuffTxframe, uint8_t SizeBuffTx);
+WSSFM1XRX_Return_t WSSFM1XRX_Init(WSSFM1XRXConfig_t *obj, DigitalFcn_t Reset, DigitalFcn_t Reset2, TxFnc_t Tx_Wssfm1xrx,WSSFM1XRX_FreqUL_t Frequency_Tx, WSSFM1XRX_DL_Return_t (*DiscrimateFrameTypeFCN)(struct WSSFM1XRXConfig* ) ,TickReadFcn_t TickRead,char* BuffRxframe , uint8_t SizeBuffRx, char* BuffTxframe, uint8_t SizeBuffTx,uint8_t MaxNumberRetries);
 
 
 /**
@@ -300,6 +328,14 @@ WSSFM1XRX_Return_t WSSFM1XRX_Sleep(WSSFM1XRXConfig_t *obj ,WSSFM1XRX_WaitMode_t 
  * @return void.
  */
 WSSFM1XRX_Return_t WSSFM1XRX_WakeUP(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait  );
+
+/**
+ * @brief Function reset the Wisol module.
+ * @param obj Structure containing all data from the Wisol module.
+ * @param Pointer to function delay blocking, of type WSSFM1XRX_WaitMode_t
+ * @return void.
+ */
+WSSFM1XRX_Return_t WSSFM1XRX_ResetModule(WSSFM1XRXConfig_t *obj ,WSSFM1XRX_WaitMode_t Wait  );
 
 /**
  * @brief Function check module sending AT command to the Wisol module.
