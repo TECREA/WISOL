@@ -63,27 +63,27 @@
 #define WSSFM1XRX_DL_P_ON_OFF  4 /*turn on off */
 
 
-/*legth buffer to transmition*/
+/*length buffer to transmition*/
 #define WSSFM1XRX_BUFF_TX_FRAME_LENGTH 32
 
-/*legth buffer to reception*/
+/*length buffer to reception*/
 #define WSSFM1XRX_BUFF_RX_FRAME_LENGTH 37
 
-/*Delays for expected response wisol module------------------------------------------------*/
+/*Delays for expected response WISOL module------------------------------------------------*/
 
-/*Delay Time for WSSFM1XRX_SendMessage wisol module [ms]*/
+/*Delay Time for WSSFM1XRX_SendMessage WISOL module [ms]*/
 #define WSSFM1XRX_SEND_MESSAGE_TIME_DELAY_RESP	    6000
 
 /*GENERAL DELAY TIME FOR COMMANDS [ms]*/
 #define WSSFM1XRX_GENERAL_TIME_DELAY_RESP	1500
 
-/*Delay Time for WSSFM1XRX_WakeUP wisol module [ms]*/
+/*Delay Time for WSSFM1XRX_WakeUP WISOL module [ms]*/
 #define WSSFM1XRX_WAKEUP_TIME_DELAY_PULSE	100
 
-/*Delay Time for waiting WSSFM1XRX_WakeUP wisol module start [ms]*/
+/*Delay Time for waiting WSSFM1XRX_WakeUP WISOL module start [ms]*/
 #define WSSFM1XRX_WAKEUP_WAIT_TIME_DELAY_RESP	300
 
-/*Delay Time for WSSFM1XRX_SLEEP wisol module [ms]*/
+/*Delay Time for WSSFM1XRX_SLEEP WISOL module [ms]*/
 #define WSSFM1XRX_SLEEP_TIME_DELAY_RESP	    500
 
 #define WSSFM1XRX_SLEEP_TIME_RESET	       1000
@@ -165,27 +165,16 @@ typedef enum{
    WSSFM1XRX_DL_DISCRIMINATE_ERROR
 } WSSFM1XRX_DL_Return_t;
 
-/**Frequency  Hz - Uplink********************************************************
- * */
+/**Frequency  Hz - Uplink********************************************************/
 typedef enum{
-	WSSFM1XRX_UL_RCZ1 = 868130000,
-	WSSFM1XRX_UL_RCZ2 = 902200000,
-	WSSFM1XRX_UL_RCZ3 = 923200000,
-	WSSFM1XRX_UL_RCZ4 = 920800000,
-	WSSFM1XRX_UL_RCZ5 = 923300000,
-	WSSFM1XRX_UL_RCZ6 = 865200000
+	WSSFM1XRX_RCZ1 = 0,
+	WSSFM1XRX_RCZ2,
+	WSSFM1XRX_RCZ3,
+	WSSFM1XRX_RCZ4,
+	WSSFM1XRX_RCZ5,
+	WSSFM1XRX_RCZ6,
 }WSSFM1XRX_FreqUL_t;
 
-/** Frequency Hz- Downlink******************************************************
- * */
-typedef enum{
-	WSSFM1XRX_DL_RCZ1 = 869525000,
-	WSSFM1XRX_DL_RCZ2 = 905200000,
-	WSSFM1XRX_DL_RCZ3 = 922200000,
-	WSSFM1XRX_DL_RCZ4 = 922300000,
-	WSSFM1XRX_DL_RCZ5 = 922300000,
-	WSSFM1XRX_DL_RCZ6 = 866300000
-}WSSFM1XRX_FreqDL_t;
 
 /** @brief enum flag blobking or non blocking for function of  wait*/
 typedef enum{
@@ -254,10 +243,8 @@ typedef struct WSSFM1XRXConfig{
 	TxFnc_t TX_WSSFM1XRX;
 	TickReadFcn_t TICK_READ;
 	/*Decodificar trama numerica return*/
-	WSSFM1XRX_DL_Return_t (*DiscrimateFrameTypeFcn)(struct WSSFM1XRXConfig* );	 /*as� por que depende de la misma estructura*/
+	WSSFM1XRX_DL_Return_t (*CallbackDownlink)(struct WSSFM1XRXConfig* );
 	volatile char *RxFrame; /*RxFrame[100]*/
-	volatile char *TxFrame; /*TxFrame[100]*/
-	uint8_t SizeBuffTx;
 	uint8_t SizeBuffRx;
 	volatile unsigned char RxReady;
 	volatile uint8_t RxIndex;
@@ -271,6 +258,8 @@ typedef struct WSSFM1XRXConfig{
 	uint8_t NumberRetries;
 	uint8_t MaxNumberRetries;
 }WSSFM1XRXConfig_t;
+
+typedef WSSFM1XRX_DL_Return_t (*WSSFM1XRX_Callback_t)(WSSFM1XRXConfig_t*);
 
 
 /**
@@ -292,9 +281,7 @@ typedef WSSFM1XRX_Return_t (*WSSFM1XRX_WaitMode_t)(WSSFM1XRXConfig_t* ,uint32_t)
  * @param obj Structure containing all data from the Wisol module.
  * @return Operation result in the form WSSFM1XRX_Return_t.
  */
-WSSFM1XRX_Return_t WSSFM1XRX_Init(WSSFM1XRXConfig_t *obj, DigitalFcn_t Reset, DigitalFcn_t Reset2, TxFnc_t Tx_Wssfm1xrx,WSSFM1XRX_FreqUL_t Frequency_Tx, WSSFM1XRX_DL_Return_t (*DiscrimateFrameTypeFCN)(struct WSSFM1XRXConfig* ) ,TickReadFcn_t TickRead,char* BuffRxframe , uint8_t SizeBuffRx, char* BuffTxframe, uint8_t SizeBuffTx,uint8_t MaxNumberRetries);
-
-
+WSSFM1XRX_Return_t WSSFM1XRX_Init(WSSFM1XRXConfig_t *obj, DigitalFcn_t Reset, DigitalFcn_t Reset2, TxFnc_t Tx_Wssfm1xrx,WSSFM1XRX_FreqUL_t Frequency_Tx, WSSFM1XRX_Callback_t DownlinkCallback ,TickReadFcn_t TickRead, char* Input , uint8_t SizeInput, uint8_t MaxNumberRetries);
 /**
  * @brief Function delay non blocking.
  * @note  the function GetTick_ms must be initialized to work

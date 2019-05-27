@@ -13,9 +13,9 @@ CC = gcc
 # The linker
 LD = gcc
 # Flags to pass to the compiler for release builds
-CFLAGS ?= -std=c89 -Wall -O3
+CFLAGS ?= -std=c89 -Wall
 # Flags to pass to the linker
-LFLAGS ?= -lm -lpthread
+LFLAGS ?= -lm
 # Output directories
 OBJ_DIR := obj
 BIN_DIR := bin

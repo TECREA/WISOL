@@ -28,8 +28,7 @@ Puede que pase...
 -SENDRAW QUE NO ESPERE EN DOENLINK?
  */
 
-#include "Drivers_Hd/Sigfox.h"
-#include <Common/Globals.h>
+#include <wssfm1xrx.h>
 /*#include <stdio.h>*/
 /** Private Prototypes************************************************************************************************************************ */
 
@@ -62,6 +61,16 @@ char NibbletoX(uint8_t value);
 /*Maximo tamaño buffer para las frecuencias*/
 #define WSSFM1XRX_MAX_BUFF_FREQ		17
 
+
+const char *WSSFM1XRX_UL_FREQUENCIES[6] ={
+	 "AT$IF=868130000\r",
+	 "AT$IF=902200000\r",
+	 "AT$IF=923200000\r",
+	 "AT$IF=920800000\r",
+	 "AT$IF=923300000\r",
+	 "AT$IF=865200000\r"
+};
+
 /*Public Functions*/
 
 /**
@@ -71,23 +80,20 @@ char NibbletoX(uint8_t value);
  * @param obj Structure containing all data from the Sigfox module.
  * @return Operation result in the form WSSFM1XRX_Return_t.
  */
-WSSFM1XRX_Return_t WSSFM1XRX_Init(WSSFM1XRXConfig_t *obj, DigitalFcn_t Reset, DigitalFcn_t Reset2, TxFnc_t Tx_Wssfm1xrx,WSSFM1XRX_FreqUL_t Frequency_Tx, WSSFM1XRX_DL_Return_t (*DiscrimateFrameTypeFCN)(struct WSSFM1XRXConfig* ) ,TickReadFcn_t TickRead,char* BuffRxframe , uint8_t SizeBuffRx, char* BuffTxframe, uint8_t SizeBuffTx,uint8_t MaxNumberRetries){
+WSSFM1XRX_Return_t WSSFM1XRX_Init(WSSFM1XRXConfig_t *obj, DigitalFcn_t Reset, DigitalFcn_t Reset2, TxFnc_t Tx_Wssfm1xrx,WSSFM1XRX_FreqUL_t Frequency_Tx, WSSFM1XRX_Callback_t DownlinkCallback ,TickReadFcn_t TickRead,char* Input , uint8_t SizeInput, uint8_t MaxNumberRetries){
 	obj->RST=Reset;
 	obj->RST2=Reset2;
 	obj->TX_WSSFM1XRX=Tx_Wssfm1xrx;
-	obj->DiscrimateFrameTypeFcn = DiscrimateFrameTypeFCN;
+	obj->CallbackDownlink = DownlinkCallback;
 	obj->TICK_READ = TickRead;
 	obj->RxReady=SF_FALSE;
 	obj->RxIndex=0;
 	obj->Frequency=Frequency_Tx;
-	obj->RxFrame = BuffRxframe; 
-	obj->SizeBuffRx = SizeBuffRx;
-	obj->TxFrame = BuffTxframe;
-	obj->SizeBuffTx = SizeBuffTx;
+	obj->RxFrame = Input; 
+	obj->SizeBuffRx = SizeInput;
 	obj->State_Api = WSSFM1XRX_IDLE; /**/
-	obj->State_W = WSSFM1XRX_W_IDLE; /*State Idle functión Wait non blocking*/
+	obj->State_W = WSSFM1XRX_W_IDLE; /*State Idle function Wait non blocking*/
 	memset( (void *) obj->RxFrame,0,obj->SizeBuffRx);
-	memset( (void *) obj->TxFrame,0,obj->SizeBuffTx);
 	obj->MaxNumberRetries = MaxNumberRetries;
 	return WSSFM1XRX_INIT_OK;
 }
@@ -157,8 +163,6 @@ WSSFM1XRX_Return_t WSSFM1XRX_Sleep(WSSFM1XRXConfig_t *obj ,WSSFM1XRX_WaitMode_t 
 	return WSSFM1XRX_SendRawMessage(obj,"AT$P=2\r","OK",NULL,Wait,WSSFM1XRX_SLEEP_TIME_DELAY_RESP); 
 
 }
-
-
 /**
  * @brief Function wakeup from pin extern the Wisol module.
  * @note Example :
@@ -180,7 +184,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_WakeUP(WSSFM1XRXConfig_t *obj ,WSSFM1XRX_WaitMode_t
 		obj->RST2(SF_TRUE);
 		RetValueAux = WSSFM1XRX_NONE;
 	}
-	/*Wait despues de salir del modo de bajo consumo*/
+	/*Wait after exit low-power mode*/
 	return  RetValue;
 }
 
@@ -394,10 +398,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_ResetChannels(WSSFM1XRXConfig_t *obj, WSSFM1XRX_Wai
  * 			<< WSSFM1XRX_RSP_NOMATCH >> If response expected is not correct 
  * */
 WSSFM1XRX_Return_t WSSFM1XRX_ChangeFrequencyUL(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait , WSSFM1XRX_FreqUL_t Frequency){	
-	char BFrequency[WSSFM1XRX_MAX_BUFF_FREQ];
-	memset(BFrequency,0,sizeof(BFrequency));
-	sprintf(BFrequency,"AT$IF=%u\r",Frequency);  /*Modificar despues*/
-	return WSSFM1XRX_SendRawMessage(obj,BFrequency,"OK",NULL,Wait,WSSFM1XRX_GENERAL_TIME_DELAY_RESP); 
+	return WSSFM1XRX_SendRawMessage(obj, (char*)WSSFM1XRX_UL_FREQUENCIES[Frequency]  ,"OK",NULL,Wait,WSSFM1XRX_GENERAL_TIME_DELAY_RESP); 
 }
 
 /**
@@ -452,17 +453,21 @@ WSSFM1XRX_Return_t WSSFM1XRX_SaveParameters(WSSFM1XRXConfig_t *obj, WSSFM1XRX_Wa
  *
  */
 WSSFM1XRX_Return_t WSSFM1XRX_SendMessage(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait, void* data, uint8_t size, uint8_t eDownlink){
-	char str[WSSFM1XRX_MAX_DATA_SIZE] = {0};
-	char Frame[WSSFM1XRX_MAX_DATA_SIZE_WITH_DL] = {0}; /*max length frame with downlink*/
-
+	uint8_t slen = 2*size + 6;
+	char UplinkPayload[WSSFM1XRX_MAX_DATA_SIZE_WITH_DL] = "AT$SF="; /*max length frame with downlink*/
 	uint32_t timeWait = WSSFM1XRX_SEND_MESSAGE_TIME_DELAY_RESP;
-	WSSFM1XRX_BuildFrame(str, data, size);
-	memset(Frame,0,sizeof(Frame));
-	/*con Downlink no transmite bien EN CONSOLA*/
-	sprintf(Frame,"AT$SF=%s%s",str,(  obj->DownLink = eDownlink )?  ",1\r" : "\r");  /*Modificar despues, revisar salida de mensaje*/
-	strcpy(obj->TxFrame,Frame);
+	WSSFM1XRX_BuildFrame(UplinkPayload+6, data, size);
+	if((obj->DownLink = eDownlink)){
+		UplinkPayload[slen++]=',';
+		UplinkPayload[slen++]='1';
+		UplinkPayload[slen++]='\r';
+	}
+	else{
+		UplinkPayload[slen]='\r';
+	}
+	
 	timeWait = eDownlink ? WSSFM1XRX_DL_TIMEOUT : WSSFM1XRX_SEND_MESSAGE_TIME_DELAY_RESP; /*WSSFM1XRX_DL_TIMEOUT*/
-	return WSSFM1XRX_SendRawMessage(obj,Frame,"OK",NULL,Wait,timeWait);
+	return WSSFM1XRX_SendRawMessage(obj, UplinkPayload, "OK", NULL, Wait, timeWait);
 }
 
 /**
@@ -553,22 +558,17 @@ WSSFM1XRX_DL_Return_t DL_DiscriminateDownLink(WSSFM1XRXConfig_t* obj){
 	}
 
 
-	return ( NULL != obj->DiscrimateFrameTypeFcn )? obj->DiscrimateFrameTypeFcn(obj) : WSSFM1XRX_DL_DISCRIMINATE_ERROR;
+	return ( NULL != obj->CallbackDownlink )? obj->CallbackDownlink(obj) : WSSFM1XRX_DL_DISCRIMINATE_ERROR;
 }
 
 /*Private Functions ********************************************************************************************************************************/
 static void WSSFM1XRX_StringTX(WSSFM1XRXConfig_t *obj, char* WSSFM1XRX_String){
-	strcpy((char*)obj->TxFrame,WSSFM1XRX_String);
-	while(*WSSFM1XRX_String) {
-		obj->TX_WSSFM1XRX(NULL,*WSSFM1XRX_String);
-		WSSFM1XRX_String++;
-	}
+	while(*WSSFM1XRX_String) obj->TX_WSSFM1XRX(NULL,*WSSFM1XRX_String++);
 }
 
 /*Private Functions ***********************************************************************************************************************************************/
 static void WSSFM1XRX_ResetObject(WSSFM1XRXConfig_t *obj){
 	memset( (void *) obj->RxFrame,0,obj->SizeBuffRx);
-	memset( (void *) obj->TxFrame,0,obj->SizeBuffTx);
 	obj->StatusFlag=WSSFM1XRX_DEFAULT;
 	obj->RxIndex=0;
 	obj->RxReady=SF_FALSE;
