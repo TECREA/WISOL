@@ -28,8 +28,8 @@ Puede que pase...
 -SENDRAW QUE NO ESPERE EN DOENLINK?
  */
 
-#include <wssfm1xrx.h>
-/*#include <stdio.h>*/
+#include "Drivers_Hd/Sigfox.h"
+
 /** Private Prototypes************************************************************************************************************************ */
 
 /*Function to  wait response with delay*/
@@ -171,7 +171,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_Sleep(WSSFM1XRXConfig_t *obj ,WSSFM1XRX_WaitMode_t 
  * @param Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
  * @return void.
  */
-WSSFM1XRX_Return_t WSSFM1XRX_WakeUP(WSSFM1XRXConfig_t *obj ,WSSFM1XRX_WaitMode_t Wait  ){
+WSSFM1XRX_Return_t WSSFM1XRX_WakeUP(WSSFM1XRXConfig_t *obj ,WSSFM1XRX_WaitMode_t Wait  ) {
 	static WSSFM1XRX_Return_t RetValue = WSSFM1XRX_NONE, RetValueAux = WSSFM1XRX_NONE;  
 	if( WSSFM1XRX_NONE ==  RetValueAux ) {
 		obj->RST(SF_FALSE);
@@ -312,6 +312,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_SendRawMessage(WSSFM1XRXConfig_t *obj,char* Payload
 			obj->NumberRetries = 0;
 			return WSSFM1XRX_MAX_RETRIES_REACHED;
 		}
+
 	}
 	/*expected is confirmed in to WSSFM1XRX_WaitForResponse*/
 	RetValue = WSSFM1XRX_WaitForResponse(obj,ExpectedResponse,Wait,msec);
@@ -411,13 +412,14 @@ WSSFM1XRX_Return_t WSSFM1XRX_ChangeFrequencyUL(WSSFM1XRXConfig_t *obj,WSSFM1XRX_
  * */
 WSSFM1XRX_Return_t WSSFM1XRX_AskFrequencyUL(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait, WSSFM1XRX_FreqUL_t *Frequency ){
 
-	/*No tiene control de los digitos tamañp de la freq*/
-	char FreqStr[10];
-	char *ptr = NULL;
 	WSSFM1XRX_Return_t RetValue;
+	uint8_t i, FreqStr[11] = {'\0'};
 
-	RetValue =	WSSFM1XRX_GetRespNoexpected(obj,Wait,"AT$IF?\r",FreqStr);
-	*Frequency = strtol((const char*)FreqStr , &ptr ,BASE_DECIMAL);
+	RetValue =	WSSFM1XRX_GetRespNoexpected(obj,Wait,"AT$IF?\r",(char*)FreqStr);
+	for(i = 0; i<6; i++) {
+		if(strstr(WSSFM1XRX_UL_FREQUENCIES[i], (const char*)FreqStr) != NULL) break;
+	}
+	*Frequency = (WSSFM1XRX_FreqUL_t)i;
 	return RetValue;
 }
 
@@ -457,7 +459,9 @@ WSSFM1XRX_Return_t WSSFM1XRX_SendMessage(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMo
 	char UplinkPayload[WSSFM1XRX_MAX_DATA_SIZE_WITH_DL] = "AT$SF="; /*max length frame with downlink*/
 	uint32_t timeWait = WSSFM1XRX_SEND_MESSAGE_TIME_DELAY_RESP;
 	WSSFM1XRX_BuildFrame(UplinkPayload+6, data, size);
-	if((obj->DownLink = eDownlink)){
+	if(( obj->State_Api == WSSFM1XRX_IDLE)) obj->DownLink = eDownlink;
+
+	if(obj->DownLink){
 		UplinkPayload[slen++]=',';
 		UplinkPayload[slen++]='1';
 		UplinkPayload[slen++]='\r';
