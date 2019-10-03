@@ -2,8 +2,8 @@
  * *******************************************************************************
  * @file WSSFM1XRX.h
  * @author julian bustamante
- * @version 1.3.0
- * @date May 09, 2019
+ * @version 1.3.1
+ * @date Oct 03, 2019
  * @brief Sigfox interface for the sigfox module. Interface
  * specific for module wisol SFM11R2D.
  *********************************************************************************/
@@ -15,6 +15,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#define WSSFM1XRX_VERSION    "1.3.1"
+#define WSSFM1XRX_CAPTION     "WSSFM1XRX" WSSFM1XRX_VERSION
 
 /*BOOL VALUES*/
 #define SF_TRUE						1
@@ -33,7 +36,7 @@
 #define WSSFM1XRX_DL_BYTES_OFFSET 3
 
 /** Downlink frame timeout */
-#define WSSFM1XRX_DL_TIMEOUT 45000 /*45s*/
+#define WSSFM1XRX_DL_TIMEOUT 60000 /*45s*/
 
 /** Minimum report time --> 10.285 min*/
 #define WSSFM1XRX_DL_MIN_REPORT_TIME 617
@@ -64,10 +67,10 @@
 
 
 /*length buffer to transmition*/
-#define WSSFM1XRX_BUFF_TX_FRAME_LENGTH 32
+#define WSSFM1XRX_BUFF_TX_FRAME_LENGTH 35
 
 /*length buffer to reception*/
-#define WSSFM1XRX_BUFF_RX_FRAME_LENGTH 37
+#define WSSFM1XRX_BUFF_RX_FRAME_LENGTH 45
 
 /*Delays for expected response WISOL module------------------------------------------------*/
 
@@ -236,6 +239,7 @@ typedef enum{
 	WSSFM1XRX_MAX_RETRIES_REACHED
 }WSSFM1XRX_Return_t;
 
+typedef uint8_t Private_t;
 /*Struct  containing all data*/
 typedef struct WSSFM1XRXConfig{
 	DigitalFcn_t RST;
@@ -250,7 +254,8 @@ typedef struct WSSFM1XRXConfig{
 	volatile uint8_t RxIndex;
 	uint8_t StatusFlag;
 	WSSFM1XRX_FreqUL_t Frequency;
-	uint8_t DownLink;
+//	uint8_t DL_Flag;
+	Private_t DownLink; /*!< No use*/
 	uint32_t UL_ReportTimeS;
 	uint8_t DL_NumericFrame[WSSFM1XRX_DL_PAYLOAD_SYZE];
 	Api_State_t State_W;
@@ -397,6 +402,15 @@ WSSFM1XRX_Return_t WSSFM1XRX_ResetChannels(WSSFM1XRXConfig_t *obj,WSSFM1XRX_Wait
  * @return WSSFM1XRX_Return_t.
  */
 WSSFM1XRX_Return_t WSSFM1XRX_ChangeFrequencyUL(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait ,WSSFM1XRX_FreqUL_t Frequency);
+
+/**
+ * @brief Function change frequency Downlink from Sigfox module.
+ * @param obj Structure containing all data from the Wisol module.
+ * @param Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
+ * @return WSSFM1XRX_Return_t.
+ */
+WSSFM1XRX_Return_t WSSFM1XRX_ChangeFrequencyDL(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait , WSSFM1XRX_FreqUL_t Frequency);
+
 /**
  * @brief Function ask frequency uplink from Wisol module.
  * @param obj Structure containing all data from the Sigfox module.
@@ -422,7 +436,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_SaveParameters(WSSFM1XRXConfig_t *obj, WSSFM1XRX_Wa
  * 
  * @return WSSFM1XRX_Return_t.
  */
-WSSFM1XRX_Return_t WSSFM1XRX_SendMessage(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait, void* data, uint8_t size, uint8_t eDownlink);
+WSSFM1XRX_Return_t WSSFM1XRX_SendMessage(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait, void* data,void * CopyDataTx, uint8_t size, uint8_t eDownlink);
 
 /**
  * @brief Function ISR UART receive incoming frame to Sigfox module.

@@ -2,8 +2,8 @@
  * *******************************************************************************
  * @file WSSFM1XRX.c
  * @author julian bustamante
- * @version 1.3.0
- * @date May 09, 2019
+ * @version 1.3.1
+ * @date Oct 03, 2019
  * @brief Sigfox interface for the sigfox module. Interface
  * specific for module wisol SFM11R2D.
  *********************************************************************************/
@@ -11,25 +11,14 @@
 /*NOTAS A CORREGIR-SOLO FORMATO-FUNCIONANDO MUY BIEN-NO OLVIDAR
 
 -rsty rst2 cambiar nombres  
--State_SigfoxChangeFrequencyDL falta
--Revisar wakeup block o non block
--revisar d enuevo todas las funciones ya que s emodifica si no se manda frame en sendrawmessage
--hacer función reiniciar status leer linea abajo, la meto en ResetObject Revisar??
 Si por algun motivo no responde el gettick, la no bloqueante se queda en waitting cambiar variables y agregarlas a una estructura para reiniciar la estructura en la plaicación en su momento??
 Puede que pase...
--RX_Sigfox puntero a función Si se necesita , ya que se modifico ISR
--Revisar ISR de nuevo se modifica char input
--Caracteres no imprimibles en ISR revisar, esta pendiente
--Nombre de check module , ask frequency verificar
--Documentar todas las funciones , se modificaron todas.
--hacer test con unity
--Hacer funcion para reiniciar el modulo
 
 -SENDRAW QUE NO ESPERE EN DOENLINK?
  */
 
-#include "Drivers_Hd/Sigfox.h"
-
+#include "wssfm1xrx.h"
+#include "Kernel/QuarkTS.h"
 /** Private Prototypes************************************************************************************************************************ */
 
 /*Function to  wait response with delay*/
@@ -69,6 +58,15 @@ const char *WSSFM1XRX_UL_FREQUENCIES[6] ={
 	 "AT$IF=920800000\r",
 	 "AT$IF=923300000\r",
 	 "AT$IF=865200000\r"
+};
+
+const char *WSSFM1XRX_DL_FREQUENCIES[6] ={
+	 "AT$DR=869525000\r",
+	 "AT$DR=905200000\r",
+	 "AT$DR=922200000\r",
+	 "AT$DR=922300000\r",
+	 "AT$DR=922300000\r",
+	 "AT$DR=866300000\r"
 };
 
 /*Public Functions*/
@@ -323,7 +321,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_SendRawMessage(WSSFM1XRXConfig_t *obj,char* Payload
 			if(BuffStr != NULL) strcpy((char*)BuffStr, (char*)obj->RxFrame) ;
 			RetValue = WSSFM1XRX_OK_RESPONSE;
 			obj->NumberRetries = 0;
-		}else if(Payload != NULL)	RetValue = WSSFM1XRX_FAILURE;
+		} //else if(Payload != NULL)	RetValue = WSSFM1XRX_FAILURE;
 		obj->State_Api = WSSFM1XRX_IDLE;
 	}
 	return RetValue;
@@ -403,6 +401,20 @@ WSSFM1XRX_Return_t WSSFM1XRX_ChangeFrequencyUL(WSSFM1XRXConfig_t *obj,WSSFM1XRX_
 }
 
 /**
+ * @brief Function change frequency Downlink from Sigfox module.
+ * @note Example :
+ * 		WSSFM1XRX_ChangeFrequencyDL(&SigfoxModule,);
+ * @param obj Structure containing all data from the Wisol module.
+ * @param Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
+ * @return WSSFM1XRX_Return_t.
+ * 			<< WSSFM1XRX_OK_RESPONSE >> If response expected is the correct
+ * 			<< WSSFM1XRX_RSP_NOMATCH >> If response expected is not correct
+ * */
+WSSFM1XRX_Return_t WSSFM1XRX_ChangeFrequencyDL(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait , WSSFM1XRX_FreqUL_t Frequency){
+	return WSSFM1XRX_SendRawMessage(obj, (char*)WSSFM1XRX_DL_FREQUENCIES[Frequency]  ,"OK",NULL,Wait,WSSFM1XRX_GENERAL_TIME_DELAY_RESP);
+}
+
+/**
  * @brief Function ask frequency uplink from Wisol module.
  * @note Example :
  * 		WSSFM1XRX_AskFrequencyUL(&SigfoxModule, Wait);
@@ -454,7 +466,8 @@ WSSFM1XRX_Return_t WSSFM1XRX_SaveParameters(WSSFM1XRXConfig_t *obj, WSSFM1XRX_Wa
  * 			<< WSSFM1XRX_RSP_NOMATCH >> If response expected is not correct 
  *
  */
-WSSFM1XRX_Return_t WSSFM1XRX_SendMessage(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait, void* data, uint8_t size, uint8_t eDownlink){
+WSSFM1XRX_Return_t WSSFM1XRX_SendMessage(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait, void* data, void * CopyDataTx, uint8_t size, uint8_t eDownlink){
+
 	uint8_t slen = 2*size + 6;
 	char UplinkPayload[WSSFM1XRX_MAX_DATA_SIZE_WITH_DL] = "AT$SF="; /*max length frame with downlink*/
 	uint32_t timeWait = WSSFM1XRX_SEND_MESSAGE_TIME_DELAY_RESP;
@@ -471,6 +484,8 @@ WSSFM1XRX_Return_t WSSFM1XRX_SendMessage(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMo
 	}
 	
 	timeWait = eDownlink ? WSSFM1XRX_DL_TIMEOUT : WSSFM1XRX_SEND_MESSAGE_TIME_DELAY_RESP; /*WSSFM1XRX_DL_TIMEOUT*/
+	if(CopyDataTx != NULL ) memcpy(CopyDataTx,UplinkPayload,WSSFM1XRX_MAX_DATA_SIZE_WITH_DL);
+
 	return WSSFM1XRX_SendRawMessage(obj, UplinkPayload, "OK", NULL, Wait, timeWait);
 }
 
@@ -492,10 +507,12 @@ void WSSFM1XRX_ISRRX(WSSFM1XRXConfig_t *obj, const char RxChar){
 	if (RxChar =='\r'){
 		/*  Check if there is a downlink request */
 		if(!obj->DownLink){
+			obj->RxFrame;
 			obj->RxIndex = 0;
 			obj->RxReady = SF_TRUE; /* Framed completed*/
 		}else
 			obj->DownLink = 0; /* Clear the downlink request */
+			//obj->RxReady = SF_TRUE; /* Framed completed*/
 	}
 }
 
@@ -523,7 +540,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_MatchResponse(WSSFM1XRXConfig_t *obj, char *expecte
 	return Rprocess;
 }
 
-/** Revisar DOC---------
+/** Call if downlink is active
  * @brief Function to discriminate downlink frames.
  * @param obj Structure containing the incoming frame from the Sigfox module.
  * @param retVal Pointer to return a value.
