@@ -2,8 +2,8 @@
  * *******************************************************************************
  * @file WSSFM1XRX.h
  * @author julian bustamante
- * @version 1.3.1
- * @date Oct 03, 2019
+ * @version 1.4.1
+ * @date Oct 11, 2019
  * @brief Sigfox interface for the sigfox module. Interface
  * specific for module wisol SFM11R2D.
  *********************************************************************************/
@@ -16,7 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define WSSFM1XRX_VERSION    "1.3.1"
+#define WSSFM1XRX_VERSION    "1.4.1"
 #define WSSFM1XRX_CAPTION     "WSSFM1XRX" WSSFM1XRX_VERSION
 
 /*BOOL VALUES*/
@@ -57,7 +57,7 @@
 
 
 /* Frame types -------------------------------------------------------------------*/
-#define WSSFM1XRX_DL_FRAME_REPORT_TIME  4
+#define WSSFM1XRX_DL_FRAME_REPORT_TIME  5
 #define WSSFM1XRX_DL_FRAME_REPORT_TIME_AND_TURN_OFF_MOTO  5
 
 /* Numeric frame offsets ---------------------------------------------------------*/
@@ -247,14 +247,13 @@ typedef struct WSSFM1XRXConfig{
 	TxFnc_t TX_WSSFM1XRX;
 	TickReadFcn_t TICK_READ;
 	/*Decodificar trama numerica return*/
-	WSSFM1XRX_DL_Return_t (*CallbackDownlink)(struct WSSFM1XRXConfig* );
+	/* WSSFM1XRX_DL_Return_t (*CallbackDownlink)(struct WSSFM1XRXConfig* );*/
 	volatile char *RxFrame; /*RxFrame[100]*/
 	uint8_t SizeBuffRx;
 	volatile unsigned char RxReady;
 	volatile uint8_t RxIndex;
 	uint8_t StatusFlag;
 	WSSFM1XRX_FreqUL_t Frequency;
-//	uint8_t DL_Flag;
 	Private_t DownLink; /*!< No use*/
 	uint32_t UL_ReportTimeS;
 	uint8_t DL_NumericFrame[WSSFM1XRX_DL_PAYLOAD_SYZE];
@@ -264,7 +263,8 @@ typedef struct WSSFM1XRXConfig{
 	uint8_t MaxNumberRetries;
 }WSSFM1XRXConfig_t;
 
-typedef WSSFM1XRX_DL_Return_t (*WSSFM1XRX_Callback_t)(WSSFM1XRXConfig_t*);
+/*Deprecated*/
+/*typedef WSSFM1XRX_DL_Return_t (*WSSFM1XRX_Callback_t)(WSSFM1XRXConfig_t*);*/
 
 
 /**
@@ -286,7 +286,7 @@ typedef WSSFM1XRX_Return_t (*WSSFM1XRX_WaitMode_t)(WSSFM1XRXConfig_t* ,uint32_t)
  * @param obj Structure containing all data from the Wisol module.
  * @return Operation result in the form WSSFM1XRX_Return_t.
  */
-WSSFM1XRX_Return_t WSSFM1XRX_Init(WSSFM1XRXConfig_t *obj, DigitalFcn_t Reset, DigitalFcn_t Reset2, TxFnc_t Tx_Wssfm1xrx,WSSFM1XRX_FreqUL_t Frequency_Tx, WSSFM1XRX_Callback_t DownlinkCallback ,TickReadFcn_t TickRead, char* Input , uint8_t SizeInput, uint8_t MaxNumberRetries);
+WSSFM1XRX_Return_t WSSFM1XRX_Init(WSSFM1XRXConfig_t *obj, DigitalFcn_t Reset, DigitalFcn_t Reset2, TxFnc_t Tx_Wssfm1xrx,WSSFM1XRX_FreqUL_t Frequency_Tx ,TickReadFcn_t TickRead,char* Input , uint8_t SizeInput, uint8_t MaxNumberRetries);
 /**
  * @brief Function delay non blocking.
  * @note  the function GetTick_ms must be initialized to work

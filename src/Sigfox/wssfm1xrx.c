@@ -2,8 +2,8 @@
  * *******************************************************************************
  * @file WSSFM1XRX.c
  * @author julian bustamante
- * @version 1.3.1
- * @date Oct 03, 2019
+ * @version 1.4.1
+ * @date Oct 11, 2019
  * @brief Sigfox interface for the sigfox module. Interface
  * specific for module wisol SFM11R2D.
  *********************************************************************************/
@@ -74,15 +74,15 @@ const char *WSSFM1XRX_DL_FREQUENCIES[6] ={
 /**
  * @brief Function initialize the Wisol module.
  * @note Example :
- * 		SigfoxModule.StatusFlag = WSSFM1XRX_Init(&SigfoxModule, RSTCtrl_Sigfox, RST2Ctrl_Sigfox, UART_SIGFOX_TX_STM, UART_SIGFOX_RX_STM ,WSSFM1XRX_UL_RCZ4,NULL,GetTick_ms);
+ * 		SigfoxModule.StatusFlag = WSSFM1XRX_Init(&SigfoxModule, RSTCtrl_Sigfox, RST2Ctrl_Sigfox,
+			APP_UART_C_SIGFOX,WSSFM1XRX_RCZ4, qSchedulerGetTick,BufferRxFrame,sizeof(BufferRxFrame),4);
  * @param obj Structure containing all data from the Sigfox module.
  * @return Operation result in the form WSSFM1XRX_Return_t.
  */
-WSSFM1XRX_Return_t WSSFM1XRX_Init(WSSFM1XRXConfig_t *obj, DigitalFcn_t Reset, DigitalFcn_t Reset2, TxFnc_t Tx_Wssfm1xrx,WSSFM1XRX_FreqUL_t Frequency_Tx, WSSFM1XRX_Callback_t DownlinkCallback ,TickReadFcn_t TickRead,char* Input , uint8_t SizeInput, uint8_t MaxNumberRetries){
+WSSFM1XRX_Return_t WSSFM1XRX_Init(WSSFM1XRXConfig_t *obj, DigitalFcn_t Reset, DigitalFcn_t Reset2, TxFnc_t Tx_Wssfm1xrx,WSSFM1XRX_FreqUL_t Frequency_Tx ,TickReadFcn_t TickRead,char* Input , uint8_t SizeInput, uint8_t MaxNumberRetries){
 	obj->RST=Reset;
 	obj->RST2=Reset2;
 	obj->TX_WSSFM1XRX=Tx_Wssfm1xrx;
-	obj->CallbackDownlink = DownlinkCallback;
 	obj->TICK_READ = TickRead;
 	obj->RxReady=SF_FALSE;
 	obj->RxIndex=0;
@@ -552,7 +552,7 @@ WSSFM1XRX_DL_Return_t DL_DiscriminateDownLink(WSSFM1XRXConfig_t* obj){
 	uint8_t byteIndex = WSSFM1XRX_DL_BYTES_OFFSET;
 	/* uint8_t numericFrame[WSSFM1XRX_DL_PAYLOAD_SYZE];*/
 	uint8_t byteStr[WSSFM1XRX_DL_BYTE_SIZE + 1] = {0};
-
+	WSSFM1XRX_DL_Return_t RetValue;
 	/* Get payload offset */
 	payLoadHead = (uint8_t *)strstr((const char*)obj->RxFrame, "RX");
 
@@ -576,10 +576,11 @@ WSSFM1XRX_DL_Return_t DL_DiscriminateDownLink(WSSFM1XRXConfig_t* obj){
 		strncpy((char *)byteStr, (const char *)(payLoadHead + byteIndex), WSSFM1XRX_DL_BYTE_SIZE);
 		obj->DL_NumericFrame[i] = (uint8_t)strtol((const char *)byteStr, NULL, 16);
 		byteIndex += WSSFM1XRX_DL_BYTES_OFFSET;
+		RetValue = WSSFM1XRX_DL_SUCCESS;
 	}
 
-
-	return ( NULL != obj->CallbackDownlink )? obj->CallbackDownlink(obj) : WSSFM1XRX_DL_DISCRIMINATE_ERROR;
+	/*Deprecated return ( NULL != obj->CallbackDownlink )? obj->CallbackDownlink(obj) : WSSFM1XRX_DL_DISCRIMINATE_ERROR;*/
+	return RetValue;
 }
 
 /*Private Functions ********************************************************************************************************************************/
