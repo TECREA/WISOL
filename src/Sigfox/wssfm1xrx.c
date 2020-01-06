@@ -2,8 +2,8 @@
  * *******************************************************************************
  * @file WSSFM1XRX.c
  * @author julian bustamante
- * @version 1.4.1
- * @date Oct 11, 2019
+ * @version 1.4.2
+ * @date Jan 5 , 2020
  * @brief Sigfox interface for the sigfox module. Interface
  * specific for module wisol SFM11R2D.
  *********************************************************************************/
@@ -14,11 +14,11 @@
 Si por algun motivo no responde el gettick, la no bloqueante se queda en waitting cambiar variables y agregarlas a una estructura para reiniciar la estructura en la plaicación en su momento??
 Puede que pase...
 
--SENDRAW QUE NO ESPERE EN DOENLINK?
  */
 
 #include "wssfm1xrx.h"
-#include "Kernel/QuarkTS.h"
+
+
 /** Private Prototypes************************************************************************************************************************ */
 
 /*Function to  wait response with delay*/
@@ -39,10 +39,9 @@ char NibbletoX(uint8_t value);
 /*Definitions Private**************************************************************************************************************************/
 
 /*Maximo tamaño buffer char*/
-#define WSSFM1XRX_MAX_DATA_SIZE 		25 /*25*/
-
+#define WSSFM1XRX_MAX_DATA_SIZE 		25
 /*Maximo tamaño buffer char*/
-#define WSSFM1XRX_MAX_DATA_SIZE_WITH_DL 		37 /*25*/
+#define WSSFM1XRX_MAX_DATA_SIZE_WITH_DL 		37
 
 /*Maximo tamaño trama hex string*/
 #define	WSSFM1XRX_MAX_BYTE_TX_FRAME	12
@@ -52,21 +51,21 @@ char NibbletoX(uint8_t value);
 
 
 const char *WSSFM1XRX_UL_FREQUENCIES[6] ={
-	 "AT$IF=868130000\r",
-	 "AT$IF=902200000\r",
-	 "AT$IF=923200000\r",
-	 "AT$IF=920800000\r",
-	 "AT$IF=923300000\r",
-	 "AT$IF=865200000\r"
+		"AT$IF=868130000\r",
+		"AT$IF=902200000\r",
+		"AT$IF=923200000\r",
+		"AT$IF=920800000\r",
+		"AT$IF=923300000\r",
+		"AT$IF=865200000\r"
 };
 
 const char *WSSFM1XRX_DL_FREQUENCIES[6] ={
-	 "AT$DR=869525000\r",
-	 "AT$DR=905200000\r",
-	 "AT$DR=922200000\r",
-	 "AT$DR=922300000\r",
-	 "AT$DR=922300000\r",
-	 "AT$DR=866300000\r"
+		"AT$DR=869525000\r",
+		"AT$DR=905200000\r",
+		"AT$DR=922200000\r",
+		"AT$DR=922300000\r",
+		"AT$DR=922300000\r",
+		"AT$DR=866300000\r"
 };
 
 /*Public Functions*/
@@ -77,6 +76,7 @@ const char *WSSFM1XRX_DL_FREQUENCIES[6] ={
  * 		SigfoxModule.StatusFlag = WSSFM1XRX_Init(&SigfoxModule, RSTCtrl_Sigfox, RST2Ctrl_Sigfox,
 			APP_UART_C_SIGFOX,WSSFM1XRX_RCZ4, qSchedulerGetTick,BufferRxFrame,sizeof(BufferRxFrame),4);
  * @param obj Structure containing all data from the Sigfox module.
+ * @param ...
  * @return Operation result in the form WSSFM1XRX_Return_t.
  */
 WSSFM1XRX_Return_t WSSFM1XRX_Init(WSSFM1XRXConfig_t *obj, DigitalFcn_t Reset, DigitalFcn_t Reset2, TxFnc_t Tx_Wssfm1xrx,WSSFM1XRX_FreqUL_t Frequency_Tx ,TickReadFcn_t TickRead,char* Input , uint8_t SizeInput, uint8_t MaxNumberRetries){
@@ -106,20 +106,21 @@ WSSFM1XRX_Return_t WSSFM1XRX_Init(WSSFM1XRXConfig_t *obj, DigitalFcn_t Reset, Di
  * @note Example :
  * 			WSSFM1XRX_Wait_NonBlock(&obj,500);
  * @param obj Structure containing all data from the Wisol module.	
- * @param time in mili second.
+ * @param msec time to wait in mili second.
  * @return Operation result in the form WSSFM1XRX_Return_t:
  * 			<< WSSFM1XRX_TIMEOUT >> if the time has expired
  * 			<< WSSFM1XRX_WAITING >> if the time has not expired
  */
 WSSFM1XRX_Return_t WSSFM1XRX_Wait_NonBlock(WSSFM1XRXConfig_t *obj, uint32_t msec){
 	static uint8_t RetValue;
-	static uint32_t WSSFM1XRX_StartTick = 0;
+	static volatile uint32_t WSSFM1XRX_StartTick = 0;
 	if(obj->State_W == WSSFM1XRX_W_IDLE ){
 		RetValue = WSSFM1XRX_WAITING ;
 		WSSFM1XRX_StartTick = 0;
 		WSSFM1XRX_StartTick = obj->TICK_READ() ;/*tickRead_ms();*/
 		obj->State_W = WSSFM1XRX_W_RUNNING ;
 	}
+
 	if( ( obj->TICK_READ() - WSSFM1XRX_StartTick) > msec ){ 
 		obj->State_W = WSSFM1XRX_W_IDLE;
 		obj->State_Api = WSSFM1XRX_IDLE; /*Cuando vence el tiempo mando el comando de nuevo*/
@@ -135,7 +136,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_Wait_NonBlock(WSSFM1XRXConfig_t *obj, uint32_t msec
  * @note Example :
  * 			WSSFM1XRX_Wait_Block(&obj,500);
  * @param obj Structure containing all data from the Wisol module.	
- * @param time in mili second.
+ * @param msec time to wait in mili second.
  * @return Operation result in the form WSSFM1XRX_Return_t:
  * 			<< WSSFM1XRX_TIMEOUT >> if the time has expired
  */
@@ -150,10 +151,9 @@ WSSFM1XRX_Return_t WSSFM1XRX_Wait_Block(WSSFM1XRXConfig_t *obj, uint32_t msec){
  * @note Example :
  *		WSSFM1XRX_Sleep(&SigfoxConfig,(WSSFM1XRX_WaitMode_t)WSSFM1XRX_Wait_Block);
  * @param obj Structure containing all data from the Wisol module.
- * @param Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
+ * @param Wait Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
  * @return WSSFM1XRX_Return_t.
- * 			<< WSSFM1XRX_OK_RESPONSE >> If response expected is the correct
- * 			<< WSSFM1XRX_RSP_NOMATCH >> If response expected is not correct
+ * 			 WSSFM1XRX_OK_RESPONSE or  WSSFM1XRX_TIMEOUT or WSSFM1XRX_WAITING
  */
 WSSFM1XRX_Return_t WSSFM1XRX_Sleep(WSSFM1XRXConfig_t *obj ,WSSFM1XRX_WaitMode_t Wait ){
 	obj->RST(1);
@@ -166,7 +166,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_Sleep(WSSFM1XRXConfig_t *obj ,WSSFM1XRX_WaitMode_t 
  * @note Example :
  * 		WSSFM1XRX_WakeUP(&SigfoxModule,Wait);
  * @param obj Structure containing all data from the Wisol module.
- * @param Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
+ * @param Wait Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
  * @return void.
  */
 WSSFM1XRX_Return_t WSSFM1XRX_WakeUP(WSSFM1XRXConfig_t *obj ,WSSFM1XRX_WaitMode_t Wait  ) {
@@ -193,15 +193,15 @@ WSSFM1XRX_Return_t WSSFM1XRX_WakeUP(WSSFM1XRXConfig_t *obj ,WSSFM1XRX_WaitMode_t
  * @note Example :
  * 		WSSFM1XRX_ResetModule(&SigfoxModule,Wait);
  * @param obj Structure containing all data from the Wisol module.
- * @param Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
- * @return void.
+ * @param Wait Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
+ * @return  WSSFM1XRX_WAITING or WSSFM1XRX_NONE or WSSFM1XRX_TIMEOUT
  */
 WSSFM1XRX_Return_t WSSFM1XRX_ResetModule(WSSFM1XRXConfig_t *obj ,WSSFM1XRX_WaitMode_t Wait  ){
 
 	static WSSFM1XRX_Return_t RetValue = WSSFM1XRX_NONE, RetValueAux = WSSFM1XRX_NONE;
 	if( WSSFM1XRX_NONE ==  RetValueAux ) {
 		WSSFM1XRX_ResetObject(obj);
- 		obj->RST2(SF_FALSE);  /*Reset*/
+		obj->RST2(SF_FALSE);  /*Reset*/
 		RetValueAux = WSSFM1XRX_WAITING;
 	}
 	RetValue =  Wait(obj,WSSFM1XRX_SLEEP_TIME_RESET); /*Return WAITING or TIMEOUT*/
@@ -221,10 +221,10 @@ WSSFM1XRX_Return_t WSSFM1XRX_ResetModule(WSSFM1XRXConfig_t *obj ,WSSFM1XRX_WaitM
  * @note Example :
  * 		WSSFM1XRX_CheckModule(&SigfoxModule,Wait);
  * @param obj Structure containing all data from the Sigfox module.
- * @param Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
+ * @param Wait Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
  * @return WSSFM1XRX_Return_t.
  * 			<< WSSFM1XRX_OK_RESPONSE >> If response expected is the correct
- * 			<< WSSFM1XRX_RSP_NOMATCH >> If response expected is not correct
+ * 			WSSFM1XRX_OK_RESPONSE or  WSSFM1XRX_TIMEOUT or WSSFM1XRX_WAITING
  */
 WSSFM1XRX_Return_t WSSFM1XRX_CheckModule(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait ){
 	return WSSFM1XRX_SendRawMessage(obj,"AT\r","OK",NULL,Wait,WSSFM1XRX_GENERAL_TIME_DELAY_RESP); 
@@ -233,13 +233,13 @@ WSSFM1XRX_Return_t WSSFM1XRX_CheckModule(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMo
 /**
  * @brief Function get ID unique from Wisol module.
  * @note Example :
- * 		WSSFM1XRX_GetID(&SigfoxModule,wait);
+ * 		WSSFM1XRX_GetID(&SigfoxModule,wait,ID);
  * @param obj Structure containing all data from the Sigfox module.
- * @param Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
- * @param Pointer to buffer for store ID
+ * @param Wait Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
+ * @param IDStr Buffer for copy string ID
  * @return WSSFM1XRX_Return_t
  * 			WSSFM1XRX_OK_RESPONSE
- * 			WSSFM1XRX_FAILURE
+ * 			WSSFM1XRX_TIMEOUT
  * 			WSSFM1XRX_WAITING
  */
 WSSFM1XRX_Return_t WSSFM1XRX_GetID(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait,char *IDStr){
@@ -251,13 +251,13 @@ WSSFM1XRX_Return_t WSSFM1XRX_GetID(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t W
 /**
  * @brief Function get PAC unique from Wisol module.
  * @note Example :
- * 		WSSFM1XRX_GetID(&SigfoxModule,wait);
+ * 		WSSFM1XRX_GetID(&SigfoxModule,wait,PAC);
  * @param obj Structure containing all data from the Sigfox module.
- * @param Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
- * @param Pointer to buffer for store PAC
+ * @param Wait Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
+ * @param PACStr Buffer for copy string PAC
  * @return WSSFM1XRX_Return_t
  * 			WSSFM1XRX_OK_RESPONSE
- * 			WSSFM1XRX_FAILURE
+ * 			WSSFM1XRX_TIMEOUT
  * 			WSSFM1XRX_WAITING
  */
 WSSFM1XRX_Return_t WSSFM1XRX_GetPAC(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait,char *PACStr ){
@@ -270,11 +270,11 @@ WSSFM1XRX_Return_t WSSFM1XRX_GetPAC(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t 
  * @note Example :
  * 		WSSFM1XRX_GetVolts(&SigfoxModule,Wait);
  * @param obj Structure containing all data from the Sigfox module.
- * @param Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
- * @param Pointer to reception buffer
+ * @param Wait Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
+ * @param mVolt pointer to variable for store mili voltage
  * @return WSSFM1XRX_Return_t
  * 			WSSFM1XRX_OK_RESPONSE
- * 			WSSFM1XRX_FAILURE
+ * 			WSSFM1XRX_TIMEOUT
  * 			WSSFM1XRX_WAITING
  */
 WSSFM1XRX_Return_t WSSFM1XRX_GetVoltage(WSSFM1XRXConfig_t *obj, WSSFM1XRX_WaitMode_t Wait,uint16_t *mVolt ){
@@ -293,8 +293,9 @@ WSSFM1XRX_Return_t WSSFM1XRX_GetVoltage(WSSFM1XRXConfig_t *obj, WSSFM1XRX_WaitMo
  * @param obj Structure containing all data from the Sigfox module.
  * @param Payload containing string to transmitions at Wisol module.
  * @param ExpectedResponse expectedResponse expected Response from module Wisol .
- * @param Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
- * @return Pointer to reception buffer
+ * @param Wait Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
+ * @param msec time to wait in mili second.
+ * @return WSSFM1XRX_OK_RESPONSE or  WSSFM1XRX_TIMEOUT or WSSFM1XRX_WAITING
  *  @Note : use only if  response expected
  */
 WSSFM1XRX_Return_t WSSFM1XRX_SendRawMessage(WSSFM1XRXConfig_t *obj,char* Payload,char* ExpectedResponse,char * BuffStr,WSSFM1XRX_WaitMode_t Wait,uint32_t msec){
@@ -319,9 +320,8 @@ WSSFM1XRX_Return_t WSSFM1XRX_SendRawMessage(WSSFM1XRXConfig_t *obj,char* Payload
 	if(WSSFM1XRX_TIMEOUT == RetValue || WSSFM1XRX_OK_RESPONSE == RetValue){
 		if( obj->RxReady ){ 
 			if(BuffStr != NULL) strcpy((char*)BuffStr, (char*)obj->RxFrame) ;
-			RetValue = WSSFM1XRX_OK_RESPONSE;
 			obj->NumberRetries = 0;
-		} //else if(Payload != NULL)	RetValue = WSSFM1XRX_FAILURE;
+		}
 		obj->State_Api = WSSFM1XRX_IDLE;
 	}
 	return RetValue;
@@ -333,8 +333,8 @@ WSSFM1XRX_Return_t WSSFM1XRX_SendRawMessage(WSSFM1XRXConfig_t *obj,char* Payload
  * @note Example :
  * 		WSSFM1XRX_AskChannels(&SigfoxModule);
  * @param obj Structure containing all data from the Sigfox module.
- * @param Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
- * @return Pointer to reception buffer
+ * @param Wait Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
+ * @return WSSFM1XRX_OK_RESPONSE or  WSSFM1XRX_TIMEOUT or WSSFM1XRX_WAITING
  */
 WSSFM1XRX_Return_t WSSFM1XRX_AskChannels(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait,Channels_t *Channels ){
 	WSSFM1XRX_Return_t RetVal ;
@@ -356,6 +356,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_AskChannels(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMo
  * @note Example :
  * 		WSSFM1XRX_CheckChannels(&SigfoxModule);
  * @param obj Structure containing all data from the Sigfox module.
+ * @param Wait Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
  * @return Operation result in the form WSSFM1XRX_Return_t.
  * 			WSSFM1XRX_CHANN_NO_OK   : se debe resetear canales
  *			WSSFM1XRX_CHANN_OK      : No se resetea canales
@@ -365,7 +366,6 @@ WSSFM1XRX_Return_t WSSFM1XRX_CheckChannels(WSSFM1XRXConfig_t *obj,WSSFM1XRX_Wait
 	Channels_t Channels ={0,0};
 	WSSFM1XRX_Return_t retval;
 	retval = WSSFM1XRX_AskChannels(obj,Wait,&Channels);
-
 	if(WSSFM1XRX_OK_RESPONSE == retval){
 		retval = (Channels.x == 0 || Channels.y < 3) ? WSSFM1XRX_CHANN_NO_OK : WSSFM1XRX_CHANN_OK;
 	}
@@ -377,24 +377,26 @@ WSSFM1XRX_Return_t WSSFM1XRX_CheckChannels(WSSFM1XRXConfig_t *obj,WSSFM1XRX_Wait
  * @note Example :
  * 		WSSFM1XRX_ResetChannels(&SigfoxModule, Wait);
  * @param obj Structure containing all data from the Sigfox module.
- * @param Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
+ * @param Wait Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
  * @return WSSFM1XRX_Return_t.
  * 			<< WSSFM1XRX_OK_RESPONSE >> If response expected is the correct
- * 			<< WSSFM1XRX_RSP_NOMATCH >> If response expected is not correct 
+ * 			or WSSFM1XRX_WAITING or WSSFM1XRX_TIMEOUT
  **/
 WSSFM1XRX_Return_t WSSFM1XRX_ResetChannels(WSSFM1XRXConfig_t *obj, WSSFM1XRX_WaitMode_t Wait ){
+
 	return WSSFM1XRX_SendRawMessage(obj,"AT$RC\r","OK",NULL,Wait,WSSFM1XRX_GENERAL_TIME_DELAY_RESP); 
 }
 
 /**
  * @brief Function change frequency uplink from Sigfox module.
  * @note Example :
- * 		WSSFM1XRX_ChangeFrequencyUL(&SigfoxModule,);
+ * 		WSSFM1XRX_ChangeFrequencyUL(&SigfoxModule,Wait,WSSFM1XRX_RCZ4);
  * @param obj Structure containing all data from the Wisol module.
- * @param Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
+ * @param Wait Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
+ * @param Frequency frequency trasmission type WSSFM1XRX_FreqUL_t
  * @return WSSFM1XRX_Return_t.
  * 			<< WSSFM1XRX_OK_RESPONSE >> If response expected is the correct
- * 			<< WSSFM1XRX_RSP_NOMATCH >> If response expected is not correct 
+ * 			or WSSFM1XRX_WAITING or WSSFM1XRX_TIMEOUT
  * */
 WSSFM1XRX_Return_t WSSFM1XRX_ChangeFrequencyUL(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait , WSSFM1XRX_FreqUL_t Frequency){	
 	return WSSFM1XRX_SendRawMessage(obj, (char*)WSSFM1XRX_UL_FREQUENCIES[Frequency]  ,"OK",NULL,Wait,WSSFM1XRX_GENERAL_TIME_DELAY_RESP); 
@@ -403,12 +405,13 @@ WSSFM1XRX_Return_t WSSFM1XRX_ChangeFrequencyUL(WSSFM1XRXConfig_t *obj,WSSFM1XRX_
 /**
  * @brief Function change frequency Downlink from Sigfox module.
  * @note Example :
- * 		WSSFM1XRX_ChangeFrequencyDL(&SigfoxModule,);
+ * 		WSSFM1XRX_ChangeFrequencyDL(&SigfoxModule,Wait,WSSFM1XRX_RCZ4);
  * @param obj Structure containing all data from the Wisol module.
- * @param Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
+ * @param Wait Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
+ * @param Frequency frequency receive type WSSFM1XRX_FreqUL_t
  * @return WSSFM1XRX_Return_t.
  * 			<< WSSFM1XRX_OK_RESPONSE >> If response expected is the correct
- * 			<< WSSFM1XRX_RSP_NOMATCH >> If response expected is not correct
+ * 			or WSSFM1XRX_WAITING or WSSFM1XRX_TIMEOUT
  * */
 WSSFM1XRX_Return_t WSSFM1XRX_ChangeFrequencyDL(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait , WSSFM1XRX_FreqUL_t Frequency){
 	return WSSFM1XRX_SendRawMessage(obj, (char*)WSSFM1XRX_DL_FREQUENCIES[Frequency]  ,"OK",NULL,Wait,WSSFM1XRX_GENERAL_TIME_DELAY_RESP);
@@ -419,7 +422,8 @@ WSSFM1XRX_Return_t WSSFM1XRX_ChangeFrequencyDL(WSSFM1XRXConfig_t *obj,WSSFM1XRX_
  * @note Example :
  * 		WSSFM1XRX_AskFrequencyUL(&SigfoxModule, Wait);
  * @param obj Structure containing all data from the Sigfox module.
- * @param Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
+ * @param Wait Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
+ * @param Frequency pointer to variable for store Frequency
  * @return   WSSFM1XRX_Return_t  WSSFM1XRX_OK_RESPONSE
  * */
 WSSFM1XRX_Return_t WSSFM1XRX_AskFrequencyUL(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait, WSSFM1XRX_FreqUL_t *Frequency ){
@@ -440,10 +444,10 @@ WSSFM1XRX_Return_t WSSFM1XRX_AskFrequencyUL(WSSFM1XRXConfig_t *obj,WSSFM1XRX_Wai
  * @note Example :
  * 		WSSFM1XRX_SaveParameters(&SigfoxModule,Wait);
  * @param obj Structure containing all data from the Wisol module.
- * @param Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
- * @return WSSFM1XRX_Return_t.
+ * @param Wait Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
+ * @return Operation result in the form WSSFM1XRX_Return_t
  * 			<< WSSFM1XRX_OK_RESPONSE >> If response expected is the correct
- * 			<< WSSFM1XRX_RSP_NOMATCH >> If response expected is not correct 
+ * 			or WSSFM1XRX_WAITING or WSSFM1XRX_TIMEOUT
  * */
 WSSFM1XRX_Return_t WSSFM1XRX_SaveParameters(WSSFM1XRXConfig_t *obj, WSSFM1XRX_WaitMode_t Wait ){
 	return WSSFM1XRX_SendRawMessage(obj,"AT$WR\r","OK",NULL,Wait,WSSFM1XRX_GENERAL_TIME_DELAY_RESP); 
@@ -453,17 +457,18 @@ WSSFM1XRX_Return_t WSSFM1XRX_SaveParameters(WSSFM1XRXConfig_t *obj, WSSFM1XRX_Wa
 /**
  * @brief Function send message frame in string hexadecimal to sigfox module.
  * 	@note Example :
- * 		x = WSSFM1XRX_SendMessage(&SigfoxModule,Wait,&iButton_Data,MAX_SIZE_IBUTTON_DATA,SigfoxModule.DownLink);
+ * 		x = WSSFM1XRX_SendMessage(&SigfoxModule,Wait,&iButton_Data,Buffer_Tx,MAX_SIZE_IBUTTON_DATA,SigfoxModule.DownLink);
  * 
  * @param obj Structure containing all data from the Sigfox module.
  * @param Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
  * @param data Structure containing frame to send the Sigfox module.
+ * @param CopyDataTx buffer for trasmission of message, size minimun 37 bytes
  * @param size number of bytes in the payload. less o equal to 12 bytes.
  * @param eDownlink downlink enable o disable (0/1)
  * 
- * @return WSSFM1XRX_Return_t.
+ * @return Operation result in the form WSSFM1XRX_Return_t
  * 			<< WSSFM1XRX_OK_RESPONSE >> If response expected is the correct
- * 			<< WSSFM1XRX_RSP_NOMATCH >> If response expected is not correct 
+ * 			or WSSFM1XRX_WAITING or WSSFM1XRX_TIMEOUT
  *
  */
 WSSFM1XRX_Return_t WSSFM1XRX_SendMessage(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait, void* data, void * CopyDataTx, uint8_t size, uint8_t eDownlink){
@@ -482,20 +487,20 @@ WSSFM1XRX_Return_t WSSFM1XRX_SendMessage(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMo
 	else{
 		UplinkPayload[slen]='\r';
 	}
-	
+
 	timeWait = eDownlink ? WSSFM1XRX_DL_TIMEOUT : WSSFM1XRX_SEND_MESSAGE_TIME_DELAY_RESP; /*WSSFM1XRX_DL_TIMEOUT*/
 	if(CopyDataTx != NULL ) memcpy(CopyDataTx,UplinkPayload,WSSFM1XRX_MAX_DATA_SIZE_WITH_DL);
-
 	return WSSFM1XRX_SendRawMessage(obj, UplinkPayload, "OK", NULL, Wait, timeWait);
 }
 
 /**
  * @brief Function ISR UART receive incoming frame to Wisol module.
  * @note Example :
- * 		SigfoxISRRX(&SigfoxModule);    //call in the  interrup serial
+ * 		SigfoxISRRX(&SigfoxModule,RxChar);    //call in the  interrup serial
  * the buffer is stored in the structure obj->RxFrame.
  * 
  * @param obj Structure containing all data from the Sigfox module.
+ * @param RxChar char received by uart
  * @return void.
  */
 void WSSFM1XRX_ISRRX(WSSFM1XRXConfig_t *obj, const char RxChar){
@@ -507,12 +512,10 @@ void WSSFM1XRX_ISRRX(WSSFM1XRXConfig_t *obj, const char RxChar){
 	if (RxChar =='\r'){
 		/*  Check if there is a downlink request */
 		if(!obj->DownLink){
-			obj->RxFrame;
 			obj->RxIndex = 0;
 			obj->RxReady = SF_TRUE; /* Framed completed*/
 		}else
 			obj->DownLink = 0; /* Clear the downlink request */
-			//obj->RxReady = SF_TRUE; /* Framed completed*/
 	}
 }
 
@@ -543,7 +546,6 @@ WSSFM1XRX_Return_t WSSFM1XRX_MatchResponse(WSSFM1XRXConfig_t *obj, char *expecte
 /** Call if downlink is active
  * @brief Function to discriminate downlink frames.
  * @param obj Structure containing the incoming frame from the Sigfox module.
- * @param retVal Pointer to return a value.
  * @return Operation result in the form WSSFM1XRX_DL_Return_t.
  */
 WSSFM1XRX_DL_Return_t DL_DiscriminateDownLink(WSSFM1XRXConfig_t* obj){
@@ -595,6 +597,7 @@ static void WSSFM1XRX_ResetObject(WSSFM1XRXConfig_t *obj){
 	obj->RxIndex=0;
 	obj->RxReady=SF_FALSE;
 	obj->State_Api = WSSFM1XRX_IDLE; /*verificar*/
+	obj->State_W = WSSFM1XRX_W_IDLE; /*verificar*/
 }
 
 
@@ -639,14 +642,13 @@ char NibbletoX(uint8_t value){
 
 
 /**
- * @brief function aux send command and wait  to sigfox module.
+ * @brief function aux send command and wait to sigfox module.
  * @param obj Structure containing all data from the Sigfox module.
- * @param Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
- * @param Pointer to char *  containing Command AT to send the Sigfox module.
- * @param Pointer to char *  to store the response of the sigfox module.
- * @param eDownlink downlink enable o disable (0/1)
+ * @param Wait Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
+ * @param CommandStr Pointer to char *  containing Command AT to send the Sigfox module.
+ * @param BuffStr Pointer to char *  to store the response of the sigfox module.
  * 
- * @return WSSFM1XRX_Return_t.
+ * @return Operation result in the form WSSFM1XRX_DL_Return_t.
  *
  * @Note : use only if not response expected
  */
