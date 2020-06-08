@@ -2,7 +2,7 @@
  * *******************************************************************************
  * @file WSSFM1XRX.h
  * @author julian bustamante
- * @version 1.4.2
+ * @version 1.4.3
  * @date Jan 5 , 2020
  * @brief Sigfox interface for the sigfox module. Interface
  * specific for module wisol SFM11R2D.
@@ -16,7 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define WSSFM1XRX_VERSION    "1.4.2"
+#define WSSFM1XRX_VERSION    "1.4.3"
 #define WSSFM1XRX_CAPTION     "WSSFM1XRX " WSSFM1XRX_VERSION
 
 /*BOOL VALUES*/
