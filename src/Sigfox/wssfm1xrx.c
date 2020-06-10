@@ -2,8 +2,8 @@
  * *******************************************************************************
  * @file WSSFM1XRX.c
  * @author julian bustamante
- * @version 1.4.3
- * @date Jan 5 , 2020
+ * @version 1.4.4
+ * @date Jan 10 , 2020
  * @brief Sigfox interface for the sigfox module. Interface
  * specific for module wisol SFM11R2D.
  *********************************************************************************/
@@ -80,6 +80,14 @@ const char *WSSFM1XRX_DL_FREQUENCIES[6] ={
  * @return Operation result in the form WSSFM1XRX_Return_t.
  */
 WSSFM1XRX_Return_t WSSFM1XRX_Init(WSSFM1XRXConfig_t *obj, DigitalFcn_t Reset, DigitalFcn_t Reset2, TxFnc_t Tx_Wssfm1xrx,WSSFM1XRX_FreqUL_t Frequency_Tx ,TickReadFcn_t TickRead,char* Input , uint8_t SizeInput, uint8_t MaxNumberRetries){
+	WSSFM1XRX_Return_t RetValue = WSSFM1XRX_INIT_OK;
+
+	if( (obj == NULL) || (Reset == NULL) || (Reset2 == NULL) || (Tx_Wssfm1xrx == NULL) || (TickRead == NULL) ){
+		RetValue = WSSFM1XRX_FAILURE;
+	}else{
+		
+	}
+
 	obj->RST=Reset;
 	obj->RST2=Reset2;
 	obj->TX_WSSFM1XRX=Tx_Wssfm1xrx;
@@ -93,7 +101,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_Init(WSSFM1XRXConfig_t *obj, DigitalFcn_t Reset, Di
 	obj->State_W = WSSFM1XRX_W_IDLE; /*State Idle function Wait non blocking*/
 	(void)memset( (void *) obj->RxFrame,0,obj->SizeBuffRx);
 	obj->MaxNumberRetries = MaxNumberRetries;
-	return WSSFM1XRX_INIT_OK;
+	return RetValue;
 }
 
 /*WSSFM1XRX_*/
@@ -415,7 +423,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_ResetChannels(WSSFM1XRXConfig_t *obj, WSSFM1XRX_Wai
  * */
 WSSFM1XRX_Return_t WSSFM1XRX_ChangeFrequencyUL(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait , WSSFM1XRX_FreqUL_t Frequency){	
 	/*misra c 11.8*/
-	return WSSFM1XRX_SendRawMessage(obj, WSSFM1XRX_UL_FREQUENCIES[Frequency]  ,"OK",NULL,Wait,WSSFM1XRX_GENERAL_TIME_DELAY_RESP); 
+	return WSSFM1XRX_SendRawMessage(obj, (char*)WSSFM1XRX_UL_FREQUENCIES[Frequency]  ,"OK",NULL,Wait,WSSFM1XRX_GENERAL_TIME_DELAY_RESP); 
 }
 
 /**
@@ -430,7 +438,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_ChangeFrequencyUL(WSSFM1XRXConfig_t *obj,WSSFM1XRX_
  * 			or WSSFM1XRX_WAITING or WSSFM1XRX_TIMEOUT
  * */
 WSSFM1XRX_Return_t WSSFM1XRX_ChangeFrequencyDL(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait , WSSFM1XRX_FreqUL_t Frequency){
-	return WSSFM1XRX_SendRawMessage(obj, WSSFM1XRX_DL_FREQUENCIES[Frequency]  ,"OK",NULL,Wait,WSSFM1XRX_GENERAL_TIME_DELAY_RESP);
+	return WSSFM1XRX_SendRawMessage(obj, (char*)WSSFM1XRX_DL_FREQUENCIES[Frequency]  ,"OK",NULL,Wait,WSSFM1XRX_GENERAL_TIME_DELAY_RESP);
 }
 
 /**
@@ -550,11 +558,11 @@ void WSSFM1XRX_ISRRX(WSSFM1XRXConfig_t *obj, const char RxChar){
 	obj->RxFrame[obj->RxIndex] = 0;
 	if (RxChar =='\r'){
 		/*  Check if there is a downlink request */
-		if(!obj->DownLink){
+		if(SF_FALSE == obj->DownLink){
 			obj->RxIndex = 0;
 			obj->RxReady = SF_TRUE; /* Framed completed*/
 		}else{	/*misra c 15.6*/
-			obj->DownLink = 0; /* Clear the downlink request */
+			obj->DownLink = SF_FALSE; /* Clear the downlink request */
 		}
 	}
 }
@@ -633,7 +641,9 @@ WSSFM1XRX_DL_Return_t DL_DiscriminateDownLink(WSSFM1XRXConfig_t* obj){
 
 /*Private Functions ********************************************************************************************************************************/
 static void WSSFM1XRX_StringTX(WSSFM1XRXConfig_t *obj, char* WSSFM1XRX_String){
-	while(*WSSFM1XRX_String) obj->TX_WSSFM1XRX(NULL,*WSSFM1XRX_String++);
+	while(*WSSFM1XRX_String) {
+		 obj->TX_WSSFM1XRX(NULL,*WSSFM1XRX_String++);
+	}
 }
 
 /*Private Functions ***********************************************************************************************************************************************/
@@ -653,9 +663,11 @@ static void WSSFM1XRX_ResetObject(WSSFM1XRXConfig_t *obj){
  * @brief Function order the frame.
  */
 static void WSSFM1XRX_BuildFrame(char* str, void* data, uint8_t size){
-	int8_t  i,j;   
-	uint8_t xbyte, finalsize;
-	uint8_t *bdata = (uint8_t*)data;
+	int8_t  i;
+	int8_t  j;   
+	uint8_t xbyte;
+	uint8_t finalsize;
+	uint8_t *bdata = (uint8_t*)data; /*no compliant misra c 11.5*/
 	size = (size > WSSFM1XRX_MAX_BYTE_TX_FRAME )? WSSFM1XRX_MAX_BYTE_TX_FRAME : size;
 	finalsize = size*2;
 	str[finalsize]='\0';
@@ -674,7 +686,7 @@ static WSSFM1XRX_Return_t WSSFM1XRX_WaitForResponse(WSSFM1XRXConfig_t *obj , cha
 	uint8_t retvalue = WSSFM1XRX_NONE, retvalueM = WSSFM1XRX_NONE;
 	retvalue =  Wait(obj,msec); /*Return WAITING or TIMEOUT*/
 	retvalueM = WSSFM1XRX_MatchResponse(obj,ExpectedResponse); /*Return Response ok or No match*/
-	return (retvalueM == WSSFM1XRX_OK_RESPONSE)? retvalueM  : retvalue  ;/*Delay NonBlocking or Non-blocking*/
+	return (retvalueM == (uint8_t)WSSFM1XRX_OK_RESPONSE)? retvalueM  : retvalue  ;/*Delay NonBlocking or Non-blocking*/
 }
 
 
@@ -682,8 +694,8 @@ static WSSFM1XRX_Return_t WSSFM1XRX_WaitForResponse(WSSFM1XRXConfig_t *obj , cha
 
 char NibbletoX(uint8_t value){
 	char ch;
-	ch = (char)(value & 0x0F) + '0';
-	return (ch > '9')? ch+7u : ch;
+	ch = (char)(value & 0x0F) + (char)'0';
+	return (ch > (char)'9')? (ch + 7u) : ch;
 }
 
 

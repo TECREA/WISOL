@@ -1,23 +1,8 @@
 #include "wrappers.h"
+#include "test_with_unity.h"
 
-
-TestData_t TestData;
-
-char ret_str[20][100]=
-{
-	"WSSFM1XRX_TIMEOUT",
-	"WSSFM1XRX_WAITING",
-	"WSSFM1XRX_RSP_NOMATCH",
-	"WSSFM1XRX_OK_RESPONSE",
-	"WSSFM1XRX_NONE",
-	"WSSFM1XRX_INIT_OK",
-	"WSSFM1XRX_PROCESS_FAILED", 		
-	"WSSFM1XRX_CHANN_OK", 			
-	"WSSFM1XRX_CHANN_NO_OK", 		
-	"WSSFM1XRX_DEFAULT",
-	"WSSFM1XRX_FAILURE",
-	"WSSFM1XRX_MAX_RETRIES_REACHED"
-};
+extern TestData_t TestData;
+extern WSSFM1XRXConfig_t Driver_WSS;
 
 /*====================================================================================*/
 void ResetControl(uint8_t c){
@@ -29,7 +14,17 @@ void Reset2Control(uint8_t c){
 }
 /*====================================================================================*/
 void OutputFunction(void *sp, char c){
-	printf("%c",c);
+	int i = 0; 
+	if(c != '\r')
+		printf("%c",c); /*no print \r in console */
+	
+	if(c == '\r') {	 /*if send command to module*/
+		while(TestData.ResponseExpected[i] != '\0') { /*then the module response is pass to isr char by char */
+		 	WSSFM1XRX_ISRRX(&Driver_WSS, TestData.ResponseExpected[i]);
+			i++;
+		}
+		printf(" --> %s\r\n",TestData.ResponseExpected);  /*print command and response*/
+	}
 }
 /*====================================================================================*/
 uint32_t GetTickCountMs(void){

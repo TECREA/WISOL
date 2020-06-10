@@ -2,8 +2,8 @@
  * *******************************************************************************
  * @file WSSFM1XRX.h
  * @author julian bustamante
- * @version 1.4.3
- * @date Jan 5 , 2020
+ * @version 1.4.4
+ * @date Jan 10 , 2020
  * @brief Sigfox interface for the sigfox module. Interface
  * specific for module wisol SFM11R2D.
  *********************************************************************************/
@@ -16,7 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define WSSFM1XRX_VERSION    "1.4.3"
+#define WSSFM1XRX_VERSION    "1.4.4"
 #define WSSFM1XRX_CAPTION     "WSSFM1XRX " WSSFM1XRX_VERSION
 
 /*BOOL VALUES*/
@@ -34,9 +34,6 @@
 
 /** Offset between bytes within the string frame */
 #define WSSFM1XRX_DL_BYTES_OFFSET 3
-
-/** Downlink frame timeout */
-#define WSSFM1XRX_DL_TIMEOUT 60000 /*45s*/
 
 /** Minimum report time --> 10.285 min*/
 #define WSSFM1XRX_DL_MIN_REPORT_TIME 617
@@ -73,9 +70,11 @@
 #define WSSFM1XRX_BUFF_RX_FRAME_LENGTH 45
 
 /*Delays for expected response WISOL module------------------------------------------------*/
+/** Downlink frame timeout */
+#define WSSFM1XRX_DL_TIMEOUT 60000 /*60s*/
 
 /*Delay Time for WSSFM1XRX_SendMessage WISOL module [ms]*/
-#define WSSFM1XRX_SEND_MESSAGE_TIME_DELAY_RESP	    6000 /*6000*/
+#define WSSFM1XRX_SEND_MESSAGE_TIME_DELAY_RESP	    6000 /*6000 6s*/
 
 /*GENERAL DELAY TIME FOR COMMANDS [ms]*/
 #define WSSFM1XRX_GENERAL_TIME_DELAY_RESP	4000 /*with 1500 ms timeout before receiving */
