@@ -168,7 +168,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_Wait_Block(WSSFM1XRXConfig_t *obj, uint32_t msec){
 WSSFM1XRX_Return_t WSSFM1XRX_Sleep(WSSFM1XRXConfig_t *obj ,WSSFM1XRX_WaitMode_t Wait ){
 	obj->RST(1);
 	obj->RST2(1);
-	return WSSFM1XRX_SendRawMessage(obj,(char*)"AT$P=2\r",(char*)"OK",NULL,Wait,WSSFM1XRX_SLEEP_TIME_DELAY_RESP); 
+	return WSSFM1XRX_SendRawMessage(obj,"AT$P=2\r","OK",NULL,Wait,WSSFM1XRX_SLEEP_TIME_DELAY_RESP); 
 
 }
 /**
@@ -254,7 +254,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_CheckModule(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMo
  * 			WSSFM1XRX_WAITING
  */
 WSSFM1XRX_Return_t WSSFM1XRX_GetID(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait,char *IDStr){
-	return 	WSSFM1XRX_GetRespNoexpected(obj,Wait,(char*)"AT$I=10\r",IDStr);
+	return 	WSSFM1XRX_GetRespNoexpected(obj,Wait,"AT$I=10\r",IDStr);
 
 	/*return NULL;*/
 }
@@ -272,7 +272,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_GetID(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t W
  * 			WSSFM1XRX_WAITING
  */
 WSSFM1XRX_Return_t WSSFM1XRX_GetPAC(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait,char *PACStr ){
-	return 	WSSFM1XRX_GetRespNoexpected(obj,Wait,(char*)"AT$I=11\r",PACStr);
+	return 	WSSFM1XRX_GetRespNoexpected(obj,Wait,"AT$I=11\r",PACStr);
 }
 
 
@@ -293,7 +293,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_GetVoltage(WSSFM1XRXConfig_t *obj, WSSFM1XRX_WaitMo
 	char *ptr = NULL;
 	WSSFM1XRX_Return_t RetValue;
 
-	RetValue =	WSSFM1XRX_GetRespNoexpected(obj,Wait,(char*)"AT$V?\r",mVolStr);
+	RetValue =	WSSFM1XRX_GetRespNoexpected(obj,Wait,"AT$V?\r",mVolStr);
 	*mVolt = (uint16_t)strtol(mVolStr , &ptr ,BASE_DECIMAL);
 	return RetValue;
 }
@@ -360,7 +360,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_SendRawMessage(WSSFM1XRXConfig_t *obj,char* Payload
 WSSFM1XRX_Return_t WSSFM1XRX_AskChannels(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait,Channels_t *Channels ){
 	WSSFM1XRX_Return_t RetVal ;
 	char* rspPtr;
-	RetVal = WSSFM1XRX_SendRawMessage(obj,(char*)"AT$GI?\r",NULL,NULL,Wait,WSSFM1XRX_GENERAL_TIME_DELAY_RESP);
+	RetVal = WSSFM1XRX_SendRawMessage(obj,"AT$GI?\r",NULL,NULL,Wait,WSSFM1XRX_GENERAL_TIME_DELAY_RESP);
 
 	if(WSSFM1XRX_OK_RESPONSE == RetVal){ 
 		rspPtr = strchr( ((const char *)obj->RxFrame) , (int)',');
@@ -406,7 +406,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_CheckChannels(WSSFM1XRXConfig_t *obj,WSSFM1XRX_Wait
  **/
 WSSFM1XRX_Return_t WSSFM1XRX_ResetChannels(WSSFM1XRXConfig_t *obj, WSSFM1XRX_WaitMode_t Wait ){
 
-	return WSSFM1XRX_SendRawMessage(obj,(char*)"AT$RC\r",(char*)"OK",NULL,Wait,WSSFM1XRX_GENERAL_TIME_DELAY_RESP); 
+	return WSSFM1XRX_SendRawMessage(obj,"AT$RC\r","OK",NULL,Wait,WSSFM1XRX_GENERAL_TIME_DELAY_RESP); 
 }
 
 /**
@@ -424,7 +424,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_ChangeFrequencyUL(WSSFM1XRXConfig_t *obj,WSSFM1XRX_
 	/*misra c 11.8*/
 	return WSSFM1XRX_SendRawMessage(obj, 
                                          (char*)WSSFM1XRX_UL_FREQUENCIES[Frequency]  ,
-                                        (char*)"OK",NULL,Wait,WSSFM1XRX_GENERAL_TIME_DELAY_RESP); 
+                                        "OK",NULL,Wait,WSSFM1XRX_GENERAL_TIME_DELAY_RESP); 
 }
 
 /**
@@ -439,7 +439,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_ChangeFrequencyUL(WSSFM1XRXConfig_t *obj,WSSFM1XRX_
  * 			or WSSFM1XRX_WAITING or WSSFM1XRX_TIMEOUT
  * */
 WSSFM1XRX_Return_t WSSFM1XRX_ChangeFrequencyDL(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait , WSSFM1XRX_FreqUL_t Frequency){
-	return WSSFM1XRX_SendRawMessage(obj, (char *)WSSFM1XRX_DL_FREQUENCIES[Frequency]  ,(char*)"OK",NULL,Wait,WSSFM1XRX_GENERAL_TIME_DELAY_RESP);
+	return WSSFM1XRX_SendRawMessage(obj, (char *)WSSFM1XRX_DL_FREQUENCIES[Frequency]  ,"OK",NULL,Wait,WSSFM1XRX_GENERAL_TIME_DELAY_RESP);
 }
 
 /**
@@ -457,7 +457,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_AskFrequencyUL(WSSFM1XRXConfig_t *obj,WSSFM1XRX_Wai
 	uint8_t i;
 	uint8_t FreqStr[11] = {(uint8_t)'\0'}; /*misra c 12.3*/
 
-	RetValue =	WSSFM1XRX_GetRespNoexpected(obj,Wait,(char*)"AT$IF?\r",(char*)FreqStr);
+	RetValue =	WSSFM1XRX_GetRespNoexpected(obj,Wait,"AT$IF?\r",(char*)FreqStr);
 	for(i = 0; i< (uint8_t)6; i++) { /*misra c 10.4*/
 		if(strstr(WSSFM1XRX_UL_FREQUENCIES[i], (const char*)FreqStr) != NULL) 
 		{
@@ -479,7 +479,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_AskFrequencyUL(WSSFM1XRXConfig_t *obj,WSSFM1XRX_Wai
  * 			or WSSFM1XRX_WAITING or WSSFM1XRX_TIMEOUT
  * */
 WSSFM1XRX_Return_t WSSFM1XRX_SaveParameters(WSSFM1XRXConfig_t *obj, WSSFM1XRX_WaitMode_t Wait ){
-	return WSSFM1XRX_SendRawMessage(obj,(char*)"AT$WR\r",(char*)"OK",NULL,Wait,WSSFM1XRX_GENERAL_TIME_DELAY_RESP); 
+	return WSSFM1XRX_SendRawMessage(obj,"AT$WR\r","OK",NULL,Wait,WSSFM1XRX_GENERAL_TIME_DELAY_RESP); 
 }
 
 
@@ -516,7 +516,6 @@ WSSFM1XRX_Return_t WSSFM1XRX_SendMessage(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMo
 		UplinkPayload[slen]='1';
 		slen++;
 		UplinkPayload[slen]='\r';
-		slen++;
 	}
 	else{
 		UplinkPayload[slen]='\r';
@@ -526,7 +525,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_SendMessage(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMo
 	if(CopyDataTx != NULL ) {
 		(void)memcpy(CopyDataTx,UplinkPayload,WSSFM1XRX_MAX_DATA_SIZE_WITH_DL);
 	}
-	return WSSFM1XRX_SendRawMessage(obj, UplinkPayload, (char*)"OK", NULL, Wait, timeWait);
+	return WSSFM1XRX_SendRawMessage(obj, UplinkPayload, "OK", NULL, Wait, timeWait);
 }
 
 /**
@@ -704,7 +703,7 @@ char NibbletoX(uint8_t value){
         uint8_t c_h;
 	c_h = (value & (uint8_t)0x0Fu) + (uint8_t)'0' ;
         ch = (char)c_h;
-	return (ch > (char)'9')? (ch + 7u) : ch;
+	return (ch > (char)'9')? (ch + 7) : ch;
 }
 
 
