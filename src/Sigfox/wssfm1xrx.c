@@ -238,7 +238,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_ResetModule(WSSFM1XRXConfig_t *obj ,WSSFM1XRX_WaitM
  * 			WSSFM1XRX_OK_RESPONSE or  WSSFM1XRX_TIMEOUT or WSSFM1XRX_WAITING
  */
 WSSFM1XRX_Return_t WSSFM1XRX_CheckModule(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait ){
-	return WSSFM1XRX_SendRawMessage(obj,(char*)"AT\r",(char*)"OK",NULL,Wait,WSSFM1XRX_GENERAL_TIME_DELAY_RESP); 
+	return WSSFM1XRX_SendRawMessage(obj,"AT\r","OK",NULL,Wait,WSSFM1XRX_GENERAL_TIME_DELAY_RESP); 
 }
 
 /**
@@ -643,8 +643,9 @@ WSSFM1XRX_DL_Return_t DL_DiscriminateDownLink(WSSFM1XRXConfig_t* obj){
 
 /*Private Functions ********************************************************************************************************************************/
 static void WSSFM1XRX_StringTX(WSSFM1XRXConfig_t *obj, char* WSSFM1XRX_String){
-	while(*WSSFM1XRX_String != '\0' ) {
-		 obj->TX_WSSFM1XRX(NULL,*WSSFM1XRX_String++);
+  int i =0;
+  while(WSSFM1XRX_String[i] != '\0' ) {          
+		 obj->TX_WSSFM1XRX(NULL,WSSFM1XRX_String[i++]);
 	}
 }
 
@@ -669,12 +670,15 @@ static void WSSFM1XRX_BuildFrame(char* str, void* data, uint8_t size){
 	int8_t  j = 0;   
 	uint8_t xbyte;
 	uint8_t finalsize;
-	uint8_t *bdata = (uint8_t*)data; /* misra c 11.5*/
-	size = (size > (uint8_t)WSSFM1XRX_MAX_BYTE_TX_FRAME )? (uint8_t)WSSFM1XRX_MAX_BYTE_TX_FRAME : size;
-	finalsize = size*((uint8_t)2);
+	uint8_t *bdata = data; /* misra c 11.5*/
+    uint8_t sizecopy;
+    sizecopy = size;
+	sizecopy = (sizecopy > (uint8_t)WSSFM1XRX_MAX_BYTE_TX_FRAME )? (uint8_t)WSSFM1XRX_MAX_BYTE_TX_FRAME : sizecopy;
+        
+	finalsize = sizecopy*((uint8_t)2);
 	str[finalsize]='\0';
         
-	for(i = ((int8_t)size-1) ; i >= 0; i--){   /*misra 10.4 */
+	for(i = ((int8_t)sizecopy-1) ; i >= 0; i--){   /*misra 10.4 */
 		xbyte = bdata[i];
 		str[j++]=NibbletoX(xbyte>>4);
 		str[j++]=NibbletoX(xbyte);
@@ -685,7 +689,8 @@ static void WSSFM1XRX_BuildFrame(char* str, void* data, uint8_t size){
  * @brief Function wait for response expected.
  */
 static WSSFM1XRX_Return_t WSSFM1XRX_WaitForResponse(WSSFM1XRXConfig_t *obj , char *ExpectedResponse, WSSFM1XRX_WaitMode_t Wait ,uint32_t msec){
-	WSSFM1XRX_Return_t retvalue, retvalueM ;/*= WSSFM1XRX_NONE;*/
+	WSSFM1XRX_Return_t retvalue;
+        WSSFM1XRX_Return_t retvalueM ;  /*= WSSFM1XRX_NONE;*/
 	retvalue =  Wait(obj,msec); /*Return WAITING or TIMEOUT*/
 	retvalueM = WSSFM1XRX_MatchResponse(obj,ExpectedResponse); /*Return Response ok or No match*/
 	return (retvalueM == WSSFM1XRX_OK_RESPONSE)? retvalueM  : retvalue  ;/*Delay NonBlocking or Non-blocking*/
@@ -696,7 +701,9 @@ static WSSFM1XRX_Return_t WSSFM1XRX_WaitForResponse(WSSFM1XRXConfig_t *obj , cha
 
 char NibbletoX(uint8_t value){
 	char ch;
-	ch = (value & (uint8_t)0x0F) + '0';
+        uint8_t c_h;
+	c_h = (value & (uint8_t)0x0Fu) + (uint8_t)'0' ;
+        ch = (char)c_h;
 	return (ch > (char)'9')? (ch + 7u) : ch;
 }
 
