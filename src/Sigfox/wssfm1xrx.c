@@ -2,8 +2,8 @@
  * *******************************************************************************
  * @file WSSFM1XRX.c
  * @author julian bustamante
- * @version 1.4.4
- * @date Jan 10 , 2020
+ * @version 1.4.5
+ * @date Jan 17 , 2020
  * @brief Sigfox interface for the sigfox module. Interface
  * specific for module wisol SFM11R2D.
  *********************************************************************************/
@@ -669,7 +669,7 @@ static void WSSFM1XRX_BuildFrame(char* str, void* data, uint8_t size){
 	int8_t  j = 0;   
 	uint8_t xbyte;
 	uint8_t finalsize;
-	uint8_t *bdata = data; /* misra c 11.5*/
+	uint8_t *bdata = data; /*desviation misra c 11.5*/
     uint8_t sizecopy;
     sizecopy = size;
 	sizecopy = (sizecopy > (uint8_t)WSSFM1XRX_MAX_BYTE_TX_FRAME )? (uint8_t)WSSFM1XRX_MAX_BYTE_TX_FRAME : sizecopy;
