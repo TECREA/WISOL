@@ -71,13 +71,13 @@
 
 /*Delays for expected response WISOL module------------------------------------------------*/
 /** Downlink frame timeout */
-#define WSSFM1XRX_DL_TIMEOUT 60000 /*60s*/
+#define WSSFM1XRX_DL_TIMEOUT 600 /*60s*/
 
 /*Delay Time for WSSFM1XRX_SendMessage WISOL module [ms]*/
-#define WSSFM1XRX_SEND_MESSAGE_TIME_DELAY_RESP	    6000 /*6000 6s*/
+#define WSSFM1XRX_SEND_MESSAGE_TIME_DELAY_RESP	    600 /*6000 6s*/
 
 /*GENERAL DELAY TIME FOR COMMANDS [ms]*/
-#define WSSFM1XRX_GENERAL_TIME_DELAY_RESP	4000 /*with 4000 ms timeout before receiving */
+#define WSSFM1XRX_GENERAL_TIME_DELAY_RESP	400 /*with 4000 ms timeout before receiving */
 
 /*Delay Time for WSSFM1XRX_WakeUP WISOL module [ms]*/
 #define WSSFM1XRX_WAKEUP_TIME_DELAY_PULSE	100

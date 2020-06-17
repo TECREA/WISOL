@@ -505,7 +505,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_SendMessage(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMo
 	uint8_t slen = ((uint8_t)2*size) + (uint8_t)6; /*misra c 10.4 & 12.1*/
 	char UplinkPayload[WSSFM1XRX_MAX_DATA_SIZE_WITH_DL] = "AT$SF="; /*max length frame with downlink*/
 	uint32_t timeWait;
-	WSSFM1XRX_BuildFrame(UplinkPayload+6, data, size); /*no compliant misra c 18.4*/
+	WSSFM1XRX_BuildFrame(&UplinkPayload[6], data, size); /*no compliant misra c 18.4*/
 	if(( obj->State_Api == WSSFM1XRX_IDLE)) {
 		obj->DownLink = eDownlink;	/*misra c 15.6*/
 	}
@@ -621,8 +621,8 @@ WSSFM1XRX_DL_Return_t DL_DiscriminateDownLink(WSSFM1XRXConfig_t* obj){
 	if(NULL == payLoadTail){
 		return WSSFM1XRX_DL_TAIL_ERROR;
         }
-        payLoadTail[0] = (uint8_t)'\0';
-	if( strlen((const char *)payLoadHead) != WSSFM1XRX_DL_PAYLOAD_LENGTH){ /*probar*/
+        payLoadTail[1] = (uint8_t)'\0';
+	if( (strlen((const char *)payLoadHead) - 1u) != WSSFM1XRX_DL_PAYLOAD_LENGTH){ /*probar*/
 		return WSSFM1XRX_DL_LENGTH_ERROR;
         }
 	/* Convert frame to numeric values */
