@@ -5,7 +5,7 @@
  * @version 1.0.0
  * @date Jan 10 , 2020
  * @brief test for verify driver sigfox module
- * @note for higher speed change WSSFM1XRX_DL_TIMEOUT 6000  WSSFM1XRX_SEND_MESSAGE_TIME_DELAY_RESP 60
+ * @note for higher speed change WSSFM1XRX_DL_TIMEOUT 600  WSSFM1XRX_SEND_MESSAGE_TIME_DELAY_RESP 600 WSSFM1XRX_GENERAL_TIME_DELAY_RESP 400
  *********************************************************************************/
 #include "test_with_unity.h"
 #include "wrappers.h"

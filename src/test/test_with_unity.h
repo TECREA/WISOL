@@ -12,7 +12,9 @@
 #include "wrappers.h"
 #include "unity.h"
 
-#undef _RESPONSE_BAD  /*define if want see functions with errors controled*/
+/*define if want see functions with errors controled*/
+#undef _RESPONSE_BAD 
+/*#define _RESPONSE_BAD*/
 
     typedef struct{
         struct timespec xdelay;

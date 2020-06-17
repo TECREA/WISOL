@@ -30,16 +30,20 @@ void tearDown (void){ } /* Is run after every test, put unit clean-up calls here
 void test_sigfox_init(){
     WSSFM1XRX_Return_t RetValue;
     
-    RetValue = WSSFM1XRX_Init(&Driver_WSS,NULL,
-                Reset2Control,OutputFunction,WSSFM1XRX_RCZ4,
-                GetTickCountMs,InputBuffer, sizeof(InputBuffer), 4);
-    TEST_ASSERT_EQUAL_INT32(WSSFM1XRX_FAILURE,RetValue);
+
 
     RetValue = WSSFM1XRX_Init(&Driver_WSS,ResetControl,
                 Reset2Control,OutputFunction,WSSFM1XRX_RCZ4,
                 GetTickCountMs,InputBuffer, sizeof(InputBuffer), 4);
 
     TEST_ASSERT_EQUAL_INT32(WSSFM1XRX_INIT_OK,RetValue);
+
+    #ifdef _RESPONSE_BAD
+    RetValue = WSSFM1XRX_Init(&Driver_WSS,NULL,
+                Reset2Control,OutputFunction,WSSFM1XRX_RCZ4,
+                GetTickCountMs,InputBuffer, sizeof(InputBuffer), 4);
+    TEST_ASSERT_EQUAL_INT32(WSSFM1XRX_INIT_OK,RetValue);
+    #endif
 
 
 }
@@ -96,6 +100,7 @@ void test_sigfox_getid(){
     (void)memset(TestData.ResponseExpected,0,sizeof(TestData.ResponseExpected));
     (void)memcpy(TestData.ResponseExpected, "0044BC37\r",9); /*internamente el ya compara si es ok y devuelve ok response*/
      /*function call OutputFunction*/
+    
     RetValue = WSSFM1XRX_GetID( &Driver_WSS, WSSFM1XRX_Wait_Block, ModuleID);
     TEST_ASSERT_EQUAL_INT32(WSSFM1XRX_OK_RESPONSE,RetValue);
     TEST_ASSERT_EQUAL_STRING("0044BC37\r",ModuleID);
@@ -202,7 +207,11 @@ void test_sigfox_checkchannels(){
     /*response bad*/
 
     #ifdef _RESPONSE_BAD
-
+    (void)memset(TestData.ResponseExpected,0,sizeof(TestData.ResponseExpected));
+    (void)memcpy(TestData.ResponseExpected, "1234\r",5);  /*X==0 | Y<3 -> RESET*/
+     /*function call OutputFunction*/
+    RetValue = WSSFM1XRX_CheckChannels( &Driver_WSS, WSSFM1XRX_Wait_Block);
+    TEST_ASSERT_EQUAL_INT32(WSSFM1XRX_CHANN_OK,RetValue);
     #endif
 
 }
@@ -246,15 +255,20 @@ void test_sigfox_sendmessage(){
 
     /*response bad*/
     #ifdef _RESPONSE_BAD
+    
+    
+    
+    (void)memset(TestData.ResponseExpected,0,sizeof(TestData.ResponseExpected));
+    (void)memcpy(TestData.ResponseExpected, "ERR_SFX_ERR_SEND_FRAME_WAIT_TIMEOUT\r\n",39);  
+    RetValue = WSSFM1XRX_SendMessage( &Driver_WSS, WSSFM1XRX_Wait_Block, Payload,CopyPayload, 12, SF_TRUE);
+    TEST_ASSERT_EQUAL_INT32(WSSFM1XRX_TIMEOUT,RetValue);  /*if response is bad, return timeout because non set flag-ready reception*/
+    /*if test fail, return and no continue test in this function*/
     (void)memset(TestData.ResponseExpected,0,sizeof(TestData.ResponseExpected));
     (void)memcpy(TestData.ResponseExpected, "OK\r\nRX =00 01 02 03 04 05 06 07\r",20);  
     RetValue = WSSFM1XRX_SendMessage( &Driver_WSS, WSSFM1XRX_Wait_Block, Payload,CopyPayload, 12, SF_TRUE);
     TEST_ASSERT_EQUAL_INT32(WSSFM1XRX_OK_RESPONSE,RetValue);  /*if response is bad, return WSSFM1XRX_TIMEOUT because non set flag-ready reception*/
 
-    (void)memset(TestData.ResponseExpected,0,sizeof(TestData.ResponseExpected));
-    (void)memcpy(TestData.ResponseExpected, "ERR_SFX_ERR_SEND_FRAME_WAIT_TIMEOUT\r\n",39);  
-    RetValue = WSSFM1XRX_SendMessage( &Driver_WSS, WSSFM1XRX_Wait_Block, Payload,CopyPayload, 12, SF_TRUE);
-    TEST_ASSERT_EQUAL_INT32(WSSFM1XRX_OK_RESPONSE,RetValue);  /*if response is bad, return timeout because non set flag-ready reception*/
+    
     #endif
 }
 
@@ -298,6 +312,11 @@ void test_sigfox_dldiscrimination(){
 
       /*response bad*/
     #ifdef _RESPONSE_BAD
+    (void)memset(Driver_WSS.RxFrame,0,WSSFM1XRX_BUFF_RX_FRAME_LENGTH);
+    (void)memcpy(Driver_WSS.RxFrame, "OK\r\nRX=00 01 02 03 04 05 06 07 08 09 0a\r",48); 
+    RetValue = DL_DiscriminateDownLink( &Driver_WSS);
+    TEST_ASSERT_EQUAL_INT32(WSSFM1XRX_DL_SUCCESS,RetValue);
+
     (void)memset(Driver_WSS.RxFrame,0,WSSFM1XRX_BUFF_RX_FRAME_LENGTH);
     (void)memcpy(Driver_WSS.RxFrame, "ERR_SFX_ERR_SEND_FRAME_WAIT_TIMEOUT\r\n",39); 
     RetValue = DL_DiscriminateDownLink( &Driver_WSS);

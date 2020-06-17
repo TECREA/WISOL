@@ -13,8 +13,8 @@
 
 #include <stdint.h>
 #include <string.h>
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #define WSSFM1XRX_VERSION    "1.4.4"
 #define WSSFM1XRX_CAPTION     "WSSFM1XRX " WSSFM1XRX_VERSION
@@ -30,7 +30,7 @@
 #define WSSFM1XRX_DL_PAYLOAD_SYZE 8
 
 /** Header(3) + Payload(16) + Spaces(7) */
-#define WSSFM1XRX_DL_PAYLOAD_LENGTH 26
+#define WSSFM1XRX_DL_PAYLOAD_LENGTH 26u
 
 /** Offset between bytes within the string frame */
 #define WSSFM1XRX_DL_BYTES_OFFSET 3
@@ -48,9 +48,9 @@
 #define WSSFM1XRX_DL_REQ_PERIOD_S  (WSSFM1XRX_DL_REQ_PERIOD_H*3600) /* 360 21600*/
 
 /** X time base in seconds for wakeup */
-#define WSSFM1XRX_DL_TIMEREQUEST(X)	(uint8_t)(WSSFM1XRX_DL_REQ_PERIOD_S/X)
+#define WSSFM1XRX_DL_TIMEREQUEST(X)	(uint8_t)( (WSSFM1XRX_DL_REQ_PERIOD_S)/(X) )
 
-#define WSSFM1XRX_DL_IF_ANY_ERROR(x)		((x == WSSFM1XRX_DL_HEAD_ERROR) || (x == WSSFM1XRX_DL_TAIL_ERROR) || (x == WSSFM1XRX_DL_LENGTH_ERROR) )
+#define WSSFM1XRX_DL_IF_ANY_ERROR(x)		(( (x) == (WSSFM1XRX_DL_HEAD_ERROR) ) || ( (x) == (WSSFM1XRX_DL_TAIL_ERROR) ) || ( (x) == (WSSFM1XRX_DL_LENGTH_ERROR) ) )
 
 
 /* Frame types -------------------------------------------------------------------*/
@@ -77,7 +77,7 @@
 #define WSSFM1XRX_SEND_MESSAGE_TIME_DELAY_RESP	    6000 /*6000 6s*/
 
 /*GENERAL DELAY TIME FOR COMMANDS [ms]*/
-#define WSSFM1XRX_GENERAL_TIME_DELAY_RESP	4000 /*with 1500 ms timeout before receiving */
+#define WSSFM1XRX_GENERAL_TIME_DELAY_RESP	4000 /*with 4000 ms timeout before receiving */
 
 /*Delay Time for WSSFM1XRX_WakeUP WISOL module [ms]*/
 #define WSSFM1XRX_WAKEUP_TIME_DELAY_PULSE	100
@@ -247,7 +247,7 @@ typedef struct WSSFM1XRXConfig{
 	TickReadFcn_t TICK_READ;
 	/*Decodificar trama numerica return*/
 	/* WSSFM1XRX_DL_Return_t (*CallbackDownlink)(struct WSSFM1XRXConfig* );*/
-	volatile char *RxFrame; /*RxFrame[100]*/
+	char *RxFrame; /*volatile char *RxFrame*/
 	uint8_t SizeBuffRx;
 	volatile unsigned char RxReady;
 	volatile uint8_t RxIndex;

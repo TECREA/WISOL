@@ -24,6 +24,7 @@ void OutputFunction(void *sp, char c){
 			i++;
 		}
 		printf(" --> %s\r\n",TestData.ResponseExpected);  /*print command and response*/
+
 	}
 }
 /*====================================================================================*/
