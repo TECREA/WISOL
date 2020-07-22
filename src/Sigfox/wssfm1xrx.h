@@ -2,8 +2,8 @@
  * *******************************************************************************
  * @file WSSFM1XRX.h
  * @author julian bustamante
- * @version 1.4.5
- * @date Jan 17 , 2020
+ * @version 1.4.6
+ * @date Jul 17 , 2020
  * @brief Sigfox interface for the sigfox module. Interface
  * specific for module wisol SFM11R2D.
  *********************************************************************************/
@@ -16,7 +16,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#define WSSFM1XRX_VERSION    "1.4.5"
+#define WSSFM1XRX_VERSION    "1.4.6"
 #define WSSFM1XRX_CAPTION     "WSSFM1XRX " WSSFM1XRX_VERSION
 
 /*BOOL VALUES*/
@@ -80,7 +80,7 @@
 #define WSSFM1XRX_GENERAL_TIME_DELAY_RESP	4000 /*with 4000 ms timeout before receiving */
 
 /*Delay Time for WSSFM1XRX_WakeUP WISOL module [ms]*/
-#define WSSFM1XRX_WAKEUP_TIME_DELAY_PULSE	100
+#define WSSFM1XRX_WAKEUP_TIME_DELAY_PULSE	200
 
 /*Delay Time for waiting WSSFM1XRX_WakeUP WISOL module start [ms]*/
 #define WSSFM1XRX_WAKEUP_WAIT_TIME_DELAY_RESP	300
@@ -199,6 +199,7 @@ typedef enum{
 	WSSFM1XRX_STATUS_WKUP,
 	WSSFM1XRX_STATUS_CHK_MODULE ,
 	WSSFM1XRX_STATUS_GET_VOLTAGE,
+	WSSFM1XRX_STATUS_ASK_FREQ_UL,
 	WSSFM1XRX_STATUS_CHANGE_FREQ_UL ,
 	WSSFM1XRX_STATUS_SAVE_PARM ,
 	WSSFM1XRX_STATUS_GET_ID,
@@ -242,7 +243,7 @@ typedef uint8_t Private_t;
 /*Struct  containing all data*/
 typedef struct WSSFM1XRXConfig{
 	DigitalFcn_t RST;
-	DigitalFcn_t RST2;
+	DigitalFcn_t WKUP;
 	TxFnc_t TX_WSSFM1XRX;
 	TickReadFcn_t TICK_READ;
 	/*Decodificar trama numerica return*/
@@ -286,7 +287,7 @@ typedef WSSFM1XRX_Return_t (*WSSFM1XRX_WaitMode_t)(WSSFM1XRXConfig_t* ,uint32_t)
  * @param ...
  * @return Operation result in the form WSSFM1XRX_Return_t.
  */
-WSSFM1XRX_Return_t WSSFM1XRX_Init(WSSFM1XRXConfig_t *obj, DigitalFcn_t Reset, DigitalFcn_t Reset2, TxFnc_t Tx_Wssfm1xrx,WSSFM1XRX_FreqUL_t Frequency_Tx ,TickReadFcn_t TickRead,char* Input , uint8_t SizeInput, uint8_t MaxNumberRetries);
+WSSFM1XRX_Return_t WSSFM1XRX_Init(WSSFM1XRXConfig_t *obj, DigitalFcn_t Reset, DigitalFcn_t WkUp, TxFnc_t Tx_Wssfm1xrx,WSSFM1XRX_FreqUL_t Frequency_Tx ,TickReadFcn_t TickRead,char* Input , uint8_t SizeInput, uint8_t MaxNumberRetries);
 /**
  * @brief Function delay non blocking.
  * @note  the function GetTick_ms must be initialized to work

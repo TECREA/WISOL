@@ -2,8 +2,8 @@
  * *******************************************************************************
  * @file WSSFM1XRX.c
  * @author julian bustamante
- * @version 1.4.5
- * @date Jan 17 , 2020
+ * @version 1.4.6
+ * @date Jul 17 , 2020
  * @brief Sigfox interface for the sigfox module. Interface
  * specific for module wisol SFM11R2D.
  *********************************************************************************/
@@ -79,13 +79,13 @@ static char *WSSFM1XRX_DL_FREQUENCIES[6] ={
  * @param ...
  * @return Operation result in the form WSSFM1XRX_Return_t.
  */
-WSSFM1XRX_Return_t WSSFM1XRX_Init(WSSFM1XRXConfig_t *obj, DigitalFcn_t Reset, DigitalFcn_t Reset2, TxFnc_t Tx_Wssfm1xrx,WSSFM1XRX_FreqUL_t Frequency_Tx ,TickReadFcn_t TickRead,char* Input , uint8_t SizeInput, uint8_t MaxNumberRetries){
+WSSFM1XRX_Return_t WSSFM1XRX_Init(WSSFM1XRXConfig_t *obj, DigitalFcn_t Reset, DigitalFcn_t WkUp, TxFnc_t Tx_Wssfm1xrx,WSSFM1XRX_FreqUL_t Frequency_Tx ,TickReadFcn_t TickRead,char* Input , uint8_t SizeInput, uint8_t MaxNumberRetries){
 	WSSFM1XRX_Return_t RetValue = WSSFM1XRX_INIT_OK;
 
-	if( (obj != NULL) && (Reset != NULL) && (Reset2 != NULL) && (Tx_Wssfm1xrx != NULL) && (TickRead != NULL) ){ /*si alguno es null, return falla*/
+	if( (obj != NULL) && (Reset != NULL) && (WkUp != NULL) && (Tx_Wssfm1xrx != NULL) && (TickRead != NULL) ){ /*si alguno es null, return falla*/
         
           obj->RST=Reset;
-          obj->RST2=Reset2;
+          obj->WKUP=WkUp;
           obj->TX_WSSFM1XRX=Tx_Wssfm1xrx;
           obj->TICK_READ = TickRead;
           obj->RxReady=SF_FALSE;
@@ -167,7 +167,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_Wait_Block(WSSFM1XRXConfig_t *obj, uint32_t msec){
  */
 WSSFM1XRX_Return_t WSSFM1XRX_Sleep(WSSFM1XRXConfig_t *obj ,WSSFM1XRX_WaitMode_t Wait ){
 	obj->RST(1);
-	obj->RST2(1);
+	obj->WKUP(1);
 	return WSSFM1XRX_SendRawMessage(obj,"AT$P=2\r","OK",NULL,Wait,WSSFM1XRX_SLEEP_TIME_DELAY_RESP); 
 
 }
@@ -183,14 +183,15 @@ WSSFM1XRX_Return_t WSSFM1XRX_WakeUP(WSSFM1XRXConfig_t *obj ,WSSFM1XRX_WaitMode_t
 	static WSSFM1XRX_Return_t RetValue = WSSFM1XRX_NONE;
 	static WSSFM1XRX_Return_t RetValueAux = WSSFM1XRX_NONE;  
 	if( WSSFM1XRX_NONE ==  RetValueAux ) {
-		obj->RST(SF_FALSE);
+		//obj->RST(SF_FALSE);
+		obj->WKUP(SF_FALSE);
 		RetValueAux = WSSFM1XRX_WAITING;
 	}
 	RetValue =  Wait(obj,WSSFM1XRX_WAKEUP_TIME_DELAY_PULSE); /*Return WAITING or TIMEOUT*/
 
 	if(WSSFM1XRX_TIMEOUT == RetValue) {
 		obj->RST(SF_TRUE);
-		obj->RST2(SF_TRUE);
+		obj->WKUP(SF_TRUE);
 		RetValueAux = WSSFM1XRX_NONE;
 	}
 	/*Wait after exit low-power mode*/
@@ -212,14 +213,15 @@ WSSFM1XRX_Return_t WSSFM1XRX_ResetModule(WSSFM1XRXConfig_t *obj ,WSSFM1XRX_WaitM
 	static WSSFM1XRX_Return_t RetValue = WSSFM1XRX_NONE, RetValueAux = WSSFM1XRX_NONE;
 	if( WSSFM1XRX_NONE ==  RetValueAux ) {
 		WSSFM1XRX_ResetObject(obj);
-		obj->RST2(SF_FALSE);  /*Reset*/
+		obj->RST(SF_FALSE);  /*Reset*/
+		obj->WKUP(SF_FALSE);  /*Wake up*/
 		RetValueAux = WSSFM1XRX_WAITING;
 	}
 	RetValue =  Wait(obj,WSSFM1XRX_SLEEP_TIME_RESET); /*Return WAITING or TIMEOUT*/
 
 	if(WSSFM1XRX_TIMEOUT == RetValue) {
 		obj->RST(SF_TRUE);
-		obj->RST2(SF_TRUE);
+		obj->WKUP(SF_TRUE);
 		RetValueAux = WSSFM1XRX_NONE;
 	}
 	/*Wait despues de salir del modo de bajo consumo*/
@@ -451,6 +453,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_ChangeFrequencyDL(WSSFM1XRXConfig_t *obj,WSSFM1XRX_
  * @param Frequency pointer to variable for store Frequency
  * @return   WSSFM1XRX_Return_t  WSSFM1XRX_OK_RESPONSE
  * */
+
 WSSFM1XRX_Return_t WSSFM1XRX_AskFrequencyUL(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait, WSSFM1XRX_FreqUL_t *Frequency ){
 
 	WSSFM1XRX_Return_t RetValue;
@@ -458,13 +461,16 @@ WSSFM1XRX_Return_t WSSFM1XRX_AskFrequencyUL(WSSFM1XRXConfig_t *obj,WSSFM1XRX_Wai
 	uint8_t FreqStr[11] = {(uint8_t)'\0'}; /*misra c 12.3*/
 
 	RetValue =	WSSFM1XRX_GetRespNoexpected(obj,Wait,"AT$IF?\r",(char*)FreqStr);
-	for(i = 0; i< (uint8_t)6; i++) { /*misra c 10.4*/
-		if(strstr(WSSFM1XRX_UL_FREQUENCIES[i], (const char*)FreqStr) != NULL) 
-		{
-			break;
+
+	if(strlen((char*)FreqStr) >= 9){  /*length frequency incomming*/
+		for(i = 0; i< (uint8_t)6; i++) { /*misra c 10.4*/
+			if(strstr(WSSFM1XRX_UL_FREQUENCIES[i], (const char*)FreqStr) != NULL)
+			{
+				break;
+			}
 		}
+		*Frequency = (WSSFM1XRX_FreqUL_t)i;
 	}
-	*Frequency = (WSSFM1XRX_FreqUL_t)i;
 	return RetValue;
 }
 
