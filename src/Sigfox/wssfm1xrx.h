@@ -16,91 +16,95 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#define WSSFM1XRX_VERSION    "1.4.6"
-#define WSSFM1XRX_CAPTION     "WSSFM1XRX " WSSFM1XRX_VERSION
+#define WSSFM1XRX_VERSION    	"1.4.6"
+#define WSSFM1XRX_CAPTION     	"WSSFM1XRX " WSSFM1XRX_VERSION
 
 /*BOOL VALUES*/
-#define SF_TRUE						1
-#define SF_FALSE 					0
+#ifndef SF_TRUE
+	#define SF_TRUE						( 1 )
+#endif
+#ifndef SF_FALSE
+	#define SF_FALSE 					( 0 )
+#endif
 
 /*Down link definitions ---------------------------------------------------------*/
 /** Each byte represented in hex */
-#define WSSFM1XRX_DL_BYTE_SIZE 2
+#define WSSFM1XRX_DL_BYTE_SIZE 			( 2 )
 
-#define WSSFM1XRX_DL_PAYLOAD_SYZE 8
+#define WSSFM1XRX_DL_PAYLOAD_SYZE 		( 8 )
 
 /** Header(3) + Payload(16) + Spaces(7) */
-#define WSSFM1XRX_DL_PAYLOAD_LENGTH 26u
+#define WSSFM1XRX_DL_PAYLOAD_LENGTH 	( 26u )
 
 /** Offset between bytes within the string frame */
-#define WSSFM1XRX_DL_BYTES_OFFSET 3
+#define WSSFM1XRX_DL_BYTES_OFFSET 		( 3 )
 
 /** Minimum report time --> 10.285 min*/
-#define WSSFM1XRX_DL_MIN_REPORT_TIME 617
+#define WSSFM1XRX_DL_MIN_REPORT_TIME 	( 617 )
 
 /** Downlink request period maximun*/
-#define WSSFM1XRX_DL_REQ_PERIOD_TRANSMISSION_MAX_DAY 4
+#define WSSFM1XRX_DL_REQ_PERIOD_TRANSMISSION_MAX_DAY 	( 4 )
 
 /** Downlink request period horas */
-#define WSSFM1XRX_DL_REQ_PERIOD_H 6
+#define WSSFM1XRX_DL_REQ_PERIOD_H 		( 6 )
 
 /** Downlink request period horas --> cada 6 horas*/
-#define WSSFM1XRX_DL_REQ_PERIOD_S  (WSSFM1XRX_DL_REQ_PERIOD_H*3600) /* 360 21600*/
+#define WSSFM1XRX_DL_REQ_PERIOD_S  		( WSSFM1XRX_DL_REQ_PERIOD_H*3600 ) /* 360 21600*/
 
 /** X time base in seconds for wakeup */
-#define WSSFM1XRX_DL_TIMEREQUEST(X)	(uint8_t)( (WSSFM1XRX_DL_REQ_PERIOD_S)/(X) )
+#define WSSFM1XRX_DL_TIMEREQUEST(X)		(uint8_t)( (WSSFM1XRX_DL_REQ_PERIOD_S)/(X) )
 
-#define WSSFM1XRX_DL_IF_ANY_ERROR(x)		(( (x) == (WSSFM1XRX_DL_HEAD_ERROR) ) || ( (x) == (WSSFM1XRX_DL_TAIL_ERROR) ) || ( (x) == (WSSFM1XRX_DL_LENGTH_ERROR) ) )
+#define WSSFM1XRX_DL_IF_ANY_ERROR(x)	(( (x) == (WSSFM1XRX_DL_HEAD_ERROR) ) || ( (x) == (WSSFM1XRX_DL_TAIL_ERROR) ) || ( (x) == (WSSFM1XRX_DL_LENGTH_ERROR) ) )
 
 
 /* Frame types -------------------------------------------------------------------*/
-#define WSSFM1XRX_DL_FRAME_REPORT_TIME  5
-#define WSSFM1XRX_DL_FRAME_REPORT_TIME_AND_TURN_OFF_MOTO  5
+#define WSSFM1XRX_DL_FRAME_REPORT_TIME  ( 5 )
+#define WSSFM1XRX_DL_FRAME_REPORT_TIME_AND_TURN_OFF_MOTO  ( 5 )
 
 /* Numeric frame offsets ---------------------------------------------------------*/
-#define WSSFM1XRX_DL_CTRLREG 0
-#define WSSFM1XRX_DL_TREP 2
-#define WSSFM1XRX_DL_P_ON_OFF  4 /*turn on off */
+#define WSSFM1XRX_DL_CTRLREG 	( 0 )
+#define WSSFM1XRX_DL_TREP 		( 2 )
+#define WSSFM1XRX_DL_P_ON_OFF   ( 4 ) /*turn on off */
 
 
 /*length buffer to transmition*/
-#define WSSFM1XRX_BUFF_TX_FRAME_LENGTH 37
+#define WSSFM1XRX_BUFF_TX_FRAME_LENGTH 	( 37 )
 
 /*length buffer to reception*/
-#define WSSFM1XRX_BUFF_RX_FRAME_LENGTH 45
+#define WSSFM1XRX_BUFF_RX_FRAME_LENGTH 	( 45 )
 
 /*Delays for expected response WISOL module------------------------------------------------*/
 /** Downlink frame timeout */
-#define WSSFM1XRX_DL_TIMEOUT 60000 /*60s*/
+#define WSSFM1XRX_DL_TIMEOUT 						( 60000 ) /*60s*/
 
 /*Delay Time for WSSFM1XRX_SendMessage WISOL module [ms]*/
-#define WSSFM1XRX_SEND_MESSAGE_TIME_DELAY_RESP	    6000 /*6000 6s*/
+#define WSSFM1XRX_SEND_MESSAGE_TIME_DELAY_RESP	    ( 6000 ) /*6000 6s*/
 
 /*GENERAL DELAY TIME FOR COMMANDS [ms]*/
-#define WSSFM1XRX_GENERAL_TIME_DELAY_RESP	4000 /*with 4000 ms timeout before receiving */
+#define WSSFM1XRX_GENERAL_TIME_DELAY_RESP			( 4000 )/*with 4000 ms timeout before receiving */
 
 /*Delay Time for WSSFM1XRX_WakeUP WISOL module [ms]*/
-#define WSSFM1XRX_WAKEUP_TIME_DELAY_PULSE	200
+#define WSSFM1XRX_WAKEUP_TIME_DELAY_PULSE			( 200 )
 
 /*Delay Time for waiting WSSFM1XRX_WakeUP WISOL module start [ms]*/
-#define WSSFM1XRX_WAKEUP_WAIT_TIME_DELAY_RESP	300
+#define WSSFM1XRX_WAKEUP_WAIT_TIME_DELAY_RESP		( 300 )
 
 /*Delay Time for WSSFM1XRX_SLEEP WISOL module [ms]*/
-#define WSSFM1XRX_SLEEP_TIME_DELAY_RESP	    500 /*500*/
+#define WSSFM1XRX_SLEEP_TIME_DELAY_RESP	    		( 500 ) /*500*/
 
-#define WSSFM1XRX_SLEEP_TIME_RESET	       1000
+#define WSSFM1XRX_SLEEP_TIME_RESET	       			( 1000 )
 
 /*GENERAL DELAY TIME FOR COMMANDS [ms]*/
-#define WSSFM1XRX_SEND_RAW_MESSAGE_TIME_DELAY_RESP	1000
+#define WSSFM1XRX_SEND_RAW_MESSAGE_TIME_DELAY_RESP	( 1000 )
 
 /*For Strtol*/
-#define BASE_DECIMAL 10
+#define BASE_DECIMAL 		( 10 )
 
 /**Char no print*/
-#define CHAR_PRINT_BELOW	10
+#define CHAR_PRINT_BELOW	( 10 )
 
 /**Char no print*/
-#define CHAR_PRINT_ABOVE	122
+#define CHAR_PRINT_ABOVE	( 122 )
 /**
  * @brief Pointer to Function type TickReadFcn_t : function Get Tick in ms.
  * 
@@ -112,7 +116,7 @@
  * @param none.
  * @return uint32_t.
  */
-typedef uint32_t (*TickReadFcn_t)(void);
+typedef uint32_t (*TickReadFcn_t)(void); /*TODO : namespaces should be object-consistent*/
 
 
 /**
@@ -125,7 +129,7 @@ typedef uint32_t (*TickReadFcn_t)(void);
  * @param uint8_t.
  * @return none.
  */
-typedef void (*DigitalFcn_t)(uint8_t);
+typedef void (*DigitalFcn_t)(uint8_t); /*TODO : namespaces should be object-consistent*/
 
 
 /**
@@ -138,7 +142,7 @@ typedef void (*DigitalFcn_t)(uint8_t);
  * @param char
  * @return none.
  */
-typedef void (*TxFnc_t)(void*,char);
+typedef void (*TxFnc_t)(void*,char); /*TODO : namespaces should be object-consistent*/
 
 
 /**
@@ -151,7 +155,7 @@ typedef void (*TxFnc_t)(void*,char);
  * @param unsigned char*
  * @return unsigned char.
  */
-typedef unsigned char (*RxFnc_t)(unsigned char*);
+typedef unsigned char (*RxFnc_t)(unsigned char*); /*TODO : namespaces should be object-consistent*/
 
 
 /**
@@ -165,7 +169,7 @@ typedef enum{
 	WSSFM1XRX_DL_TIME_OK,		/*Time success*/
 	WSSFM1XRX_DL_UNKNOWN,
 	WSSFM1XRX_DL_DISCRIMINATE_ERROR
-} WSSFM1XRX_DL_Return_t;
+}WSSFM1XRX_DL_Return_t;
 
 /**Frequency  Hz - Uplink********************************************************/
 typedef enum{
@@ -190,7 +194,7 @@ typedef enum{
 	WSSFM1XRX_RUNNING,
 	WSSFM1XRX_W_IDLE,
 	WSSFM1XRX_W_RUNNING
-}Api_State_t;
+}WSSFM1XRX_ApiState_t;
 
 /** @brief enum status functions for user******************************************************
  * */
@@ -220,7 +224,7 @@ typedef enum{
 typedef struct{
 	uint8_t x;
 	uint8_t y;
-}Channels_t;
+}WSSFM1XRX_Channels_t;
 /**
  * @brief Return codes for TIME and Expected Response operation.
  */
@@ -239,7 +243,7 @@ typedef enum{
 	WSSFM1XRX_MAX_RETRIES_REACHED
 }WSSFM1XRX_Return_t;
 
-typedef uint8_t Private_t;
+typedef uint8_t Private_t; /* why?? */
 /*Struct  containing all data*/
 typedef struct WSSFM1XRXConfig{
 	DigitalFcn_t RST;
@@ -257,8 +261,8 @@ typedef struct WSSFM1XRXConfig{
 	Private_t DownLink; /*!< No use*/
 	uint32_t UL_ReportTimeS;
 	uint8_t DL_NumericFrame[WSSFM1XRX_DL_PAYLOAD_SYZE];
-	Api_State_t State_W;
-	Api_State_t State_Api;
+	WSSFM1XRX_ApiState_t State_W;
+	WSSFM1XRX_ApiState_t State_Api;
 	uint8_t NumberRetries;
 	uint8_t MaxNumberRetries;
 }WSSFM1XRXConfig_t;
@@ -382,7 +386,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_SendRawMessage(WSSFM1XRXConfig_t *obj,char* Payload
  * @param Wait Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
  * @return Operation result in the form WSSFM1XRX_Return_t
  */
-WSSFM1XRX_Return_t WSSFM1XRX_AskChannels(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait,Channels_t *Channels );
+WSSFM1XRX_Return_t WSSFM1XRX_AskChannels(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait, WSSFM1XRX_Channels_t *Channels );
 
 /**  Revisar DOC--------
  * @brief Function verificate channels of the transceiver.
