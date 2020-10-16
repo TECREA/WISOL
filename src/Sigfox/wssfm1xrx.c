@@ -82,25 +82,25 @@ static char *WSSFM1XRX_DL_FREQUENCIES[6] ={
 WSSFM1XRX_Return_t WSSFM1XRX_Init(WSSFM1XRXConfig_t *obj, DigitalFcn_t Reset, DigitalFcn_t WkUp, TxFnc_t Tx_Wssfm1xrx,WSSFM1XRX_FreqUL_t Frequency_Tx ,TickReadFcn_t TickRead,char* Input , uint8_t SizeInput, uint8_t MaxNumberRetries){
 	WSSFM1XRX_Return_t RetValue = WSSFM1XRX_INIT_OK;
 
-	if( (obj != NULL) && (Reset != NULL) && (WkUp != NULL) && (Tx_Wssfm1xrx != NULL) && (TickRead != NULL) ){ /*si alguno es null, return falla*/
-        
-          obj->RST=Reset;
-          obj->WKUP=WkUp;
-          obj->TX_WSSFM1XRX=Tx_Wssfm1xrx;
-          obj->TICK_READ = TickRead;
-          obj->RxReady=SF_FALSE;
-          obj->RxIndex=0;
-          obj->Frequency=Frequency_Tx;
-          obj->RxFrame = Input; 
-          obj->SizeBuffRx = SizeInput;
-          obj->State_Api = WSSFM1XRX_IDLE; /**/
-          obj->State_W = WSSFM1XRX_W_IDLE; /*State Idle function Wait non blocking*/
-          (void)memset((void*)obj->RxFrame,0,obj->SizeBuffRx);
-          obj->MaxNumberRetries = MaxNumberRetries;
-        }else{
+	if( ( NULL != obj ) && ( NULL != Reset ) && ( NULL != WkUp ) && ( NULL != Tx_Wssfm1xrx ) && ( NULL != TickRead ) ){ /*si alguno es null, return falla*/
+        obj->RST=Reset;
+        obj->WKUP=WkUp;
+        obj->TX_WSSFM1XRX=Tx_Wssfm1xrx;
+        obj->TICK_READ = TickRead;
+        obj->RxReady=SF_FALSE;
+        obj->RxIndex=0;
+        obj->Frequency=Frequency_Tx;
+        obj->RxFrame = Input; 
+        obj->SizeBuffRx = SizeInput;
+        obj->State_Api = WSSFM1XRX_IDLE; /**/
+        obj->State_W = WSSFM1XRX_W_IDLE; /*State Idle function Wait non blocking*/
+        (void)memset((void*)obj->RxFrame,0,obj->SizeBuffRx);
+        obj->MaxNumberRetries = MaxNumberRetries;
+    }
+	else{
 		RetValue = WSSFM1XRX_FAILURE;
 	}
-          return RetValue;
+    return RetValue;
 }
 
 /*WSSFM1XRX_*/
@@ -121,7 +121,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_Init(WSSFM1XRXConfig_t *obj, DigitalFcn_t Reset, Di
 WSSFM1XRX_Return_t WSSFM1XRX_Wait_NonBlock(WSSFM1XRXConfig_t *obj, uint32_t msec){
 	static WSSFM1XRX_Return_t RetValue;
 	static volatile uint32_t WSSFM1XRX_StartTick = 0;
-	if(obj->State_W == WSSFM1XRX_W_IDLE ){
+	if( WSSFM1XRX_W_IDLE == obj->State_W ){
 		RetValue = WSSFM1XRX_WAITING ;
 		WSSFM1XRX_StartTick = 0;
 		WSSFM1XRX_StartTick = obj->TICK_READ() ;/*tickRead_ms();*/
@@ -132,8 +132,8 @@ WSSFM1XRX_Return_t WSSFM1XRX_Wait_NonBlock(WSSFM1XRXConfig_t *obj, uint32_t msec
 		obj->State_W = WSSFM1XRX_W_IDLE;
 		obj->State_Api = WSSFM1XRX_IDLE; /*Cuando vence el tiempo mando el comando de nuevo*/
 		RetValue = WSSFM1XRX_TIMEOUT ;
-	}else 
-	{
+	}
+	else{
 		RetValue = WSSFM1XRX_WAITING;
 	}
 	return RetValue;
@@ -151,8 +151,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_Wait_NonBlock(WSSFM1XRXConfig_t *obj, uint32_t msec
  * 			<< WSSFM1XRX_TIMEOUT >> if the time has expired
  */
 WSSFM1XRX_Return_t WSSFM1XRX_Wait_Block(WSSFM1XRXConfig_t *obj, uint32_t msec){
-	while( WSSFM1XRX_WAITING == WSSFM1XRX_Wait_NonBlock(obj, msec) ){
-	}
+	while( WSSFM1XRX_WAITING == WSSFM1XRX_Wait_NonBlock(obj, msec) ){}
 	return WSSFM1XRX_TIMEOUT ;
 }
 
@@ -189,7 +188,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_WakeUP(WSSFM1XRXConfig_t *obj ,WSSFM1XRX_WaitMode_t
 	}
 	RetValue =  Wait(obj,WSSFM1XRX_WAKEUP_TIME_DELAY_PULSE); /*Return WAITING or TIMEOUT*/
 
-	if(WSSFM1XRX_TIMEOUT == RetValue) {
+	if( WSSFM1XRX_TIMEOUT == RetValue ){
 		obj->RST(SF_TRUE);
 		obj->WKUP(SF_TRUE);
 		RetValueAux = WSSFM1XRX_NONE;
@@ -211,7 +210,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_WakeUP(WSSFM1XRXConfig_t *obj ,WSSFM1XRX_WaitMode_t
 WSSFM1XRX_Return_t WSSFM1XRX_ResetModule(WSSFM1XRXConfig_t *obj ,WSSFM1XRX_WaitMode_t Wait  ){
 
 	static WSSFM1XRX_Return_t RetValue = WSSFM1XRX_NONE, RetValueAux = WSSFM1XRX_NONE;
-	if( WSSFM1XRX_NONE ==  RetValueAux ) {
+	if( WSSFM1XRX_NONE == RetValueAux ){
 		WSSFM1XRX_ResetObject(obj);
 		obj->RST(SF_FALSE);  /*Reset*/
 		obj->WKUP(SF_FALSE);  /*Wake up*/
@@ -219,7 +218,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_ResetModule(WSSFM1XRXConfig_t *obj ,WSSFM1XRX_WaitM
 	}
 	RetValue =  Wait(obj,WSSFM1XRX_SLEEP_TIME_RESET); /*Return WAITING or TIMEOUT*/
 
-	if(WSSFM1XRX_TIMEOUT == RetValue) {
+	if( WSSFM1XRX_TIMEOUT == RetValue ){
 		obj->RST(SF_TRUE);
 		obj->WKUP(SF_TRUE);
 		RetValueAux = WSSFM1XRX_NONE;
@@ -314,9 +313,9 @@ WSSFM1XRX_Return_t WSSFM1XRX_GetVoltage(WSSFM1XRXConfig_t *obj, WSSFM1XRX_WaitMo
 WSSFM1XRX_Return_t WSSFM1XRX_SendRawMessage(WSSFM1XRXConfig_t *obj,char* Payload,char* ExpectedResponse,char * BuffStr,WSSFM1XRX_WaitMode_t Wait,uint32_t msec){
 
 	WSSFM1XRX_Return_t RetValue = WSSFM1XRX_NONE;
-	if( ( obj->State_Api == WSSFM1XRX_IDLE) ) { /*Firstentry bloqueante o no bloqueante*/
+	if( WSSFM1XRX_IDLE == obj->State_Api ){ /*Firstentry bloqueante o no bloqueante*/
 		WSSFM1XRX_ResetObject(obj);
-		if(Payload != NULL) {
+		if( NULL != Payload ) {
 			WSSFM1XRX_StringTX(obj,Payload);
 		}
 		obj->State_Api = WSSFM1XRX_RUNNING;
@@ -327,10 +326,10 @@ WSSFM1XRX_Return_t WSSFM1XRX_SendRawMessage(WSSFM1XRXConfig_t *obj,char* Payload
 
 	}
 	/*expected is confirmed in to WSSFM1XRX_WaitForResponse*/
-	if(RetValue == WSSFM1XRX_MAX_RETRIES_REACHED){
+	if( WSSFM1XRX_MAX_RETRIES_REACHED == RetValue ){
 		/*compliant misra c 15.5*/
-	}else
-	{
+	}
+	else{
 		RetValue = WSSFM1XRX_WaitForResponse(obj,ExpectedResponse,Wait,msec);
 	}
 	
@@ -339,8 +338,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_SendRawMessage(WSSFM1XRXConfig_t *obj,char* Payload
 	/*para que funcione block or non block*/
 	if( (WSSFM1XRX_TIMEOUT == RetValue) || (WSSFM1XRX_OK_RESPONSE == RetValue) ){ /*misra c 12.1*/
 		if( (uint8_t)SF_TRUE == obj->RxReady ){ /*misra c 14.4*/
-			if(BuffStr != NULL)  /*misra c 15.6*/
-			{
+			if( NULL != BuffStr ){  /*misra c 15.6*/
 				(void)strcpy(BuffStr, (char*)obj->RxFrame) ; /*misra c 17.7*/
 			}
 			obj->NumberRetries = 0;
@@ -359,14 +357,14 @@ WSSFM1XRX_Return_t WSSFM1XRX_SendRawMessage(WSSFM1XRXConfig_t *obj,char* Payload
  * @param Wait Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
  * @return WSSFM1XRX_OK_RESPONSE or  WSSFM1XRX_TIMEOUT or WSSFM1XRX_WAITING
  */
-WSSFM1XRX_Return_t WSSFM1XRX_AskChannels(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait,Channels_t *Channels ){
+WSSFM1XRX_Return_t WSSFM1XRX_AskChannels(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait, WSSFM1XRX_Channels_t *Channels ){
 	WSSFM1XRX_Return_t RetVal ;
 	char* rspPtr;
 	RetVal = WSSFM1XRX_SendRawMessage(obj,"AT$GI?\r",NULL,NULL,Wait,WSSFM1XRX_GENERAL_TIME_DELAY_RESP);
 
-	if(WSSFM1XRX_OK_RESPONSE == RetVal){ 
+	if( WSSFM1XRX_OK_RESPONSE == RetVal ){ 
 		rspPtr = strchr( ((const char *)obj->RxFrame) , (int)',');
-		if(rspPtr != NULL){
+		if( NULL != rspPtr ){
 			Channels->x = (uint8_t)obj->RxFrame[0]- (uint8_t)'0';/* (*(rspPtr-1))-(uint8_t)'0';*/ /*non compliant misra c 18.4*/
 			Channels->y = (uint8_t)obj->RxFrame[2] -(uint8_t)'0' ;  /* (*(rspPtr+1))-(uint8_t)'0';  */
 		}
@@ -385,11 +383,11 @@ WSSFM1XRX_Return_t WSSFM1XRX_AskChannels(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMo
  *			WSSFM1XRX_CHANN_OK      : No se resetea canales
  */
 /*hacer getchannels */
-WSSFM1XRX_Return_t WSSFM1XRX_CheckChannels(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait ){
-	Channels_t Channels ={0,0};
+WSSFM1XRX_Return_t WSSFM1XRX_CheckChannels(WSSFM1XRXConfig_t *obj, WSSFM1XRX_WaitMode_t Wait ){
+	WSSFM1XRX_Channels_t Channels ={0,0};
 	WSSFM1XRX_Return_t retval;
 	retval = WSSFM1XRX_AskChannels(obj,Wait,&Channels);
-	if(WSSFM1XRX_OK_RESPONSE == retval){
+	if( WSSFM1XRX_OK_RESPONSE == retval ){
 		/*misra c 10.4 & 12.1*/
 		retval = ( (Channels.x == (uint8_t)0) || (Channels.y < (uint8_t)3 )) ? WSSFM1XRX_CHANN_NO_OK : WSSFM1XRX_CHANN_OK;
 	}
@@ -455,17 +453,15 @@ WSSFM1XRX_Return_t WSSFM1XRX_ChangeFrequencyDL(WSSFM1XRXConfig_t *obj,WSSFM1XRX_
  * */
 
 WSSFM1XRX_Return_t WSSFM1XRX_AskFrequencyUL(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait, WSSFM1XRX_FreqUL_t *Frequency ){
-
 	WSSFM1XRX_Return_t RetValue;
 	uint8_t i;
 	uint8_t FreqStr[11] = {(uint8_t)'\0'}; /*misra c 12.3*/
 
 	RetValue =	WSSFM1XRX_GetRespNoexpected(obj,Wait,"AT$IF?\r",(char*)FreqStr);
 
-	if(strlen((char*)FreqStr) >= 9){  /*length frequency incomming*/
+	if( strlen((char*)FreqStr) >= 9 ){  /*length frequency incomming*/
 		for(i = 0; i< (uint8_t)6; i++) { /*misra c 10.4*/
-			if(strstr(WSSFM1XRX_UL_FREQUENCIES[i], (const char*)FreqStr) != NULL)
-			{
+			if( NULL != strstr(WSSFM1XRX_UL_FREQUENCIES[i], (const char*)FreqStr) ){
 				break;
 			}
 		}
@@ -507,12 +503,11 @@ WSSFM1XRX_Return_t WSSFM1XRX_SaveParameters(WSSFM1XRXConfig_t *obj, WSSFM1XRX_Wa
  *
  */
 WSSFM1XRX_Return_t WSSFM1XRX_SendMessage(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait, void* data, void * CopyDataTx, uint8_t size, uint8_t eDownlink){
-
 	uint8_t slen = ((uint8_t)2*size) + (uint8_t)6; /*misra c 10.4 & 12.1*/
 	char UplinkPayload[WSSFM1XRX_MAX_DATA_SIZE_WITH_DL] = "AT$SF="; /*max length frame with downlink*/
 	uint32_t timeWait;
 	WSSFM1XRX_BuildFrame(&UplinkPayload[6], data, size); /*no compliant misra c 18.4*/
-	if(( obj->State_Api == WSSFM1XRX_IDLE)) {
+	if(( WSSFM1XRX_IDLE == obj->State_Api )) {
 		obj->DownLink = eDownlink;	/*misra c 15.6*/
 	}
 
@@ -528,7 +523,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_SendMessage(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMo
 	}
 
 	timeWait = (bool)eDownlink ? (uint32_t)WSSFM1XRX_DL_TIMEOUT : (uint32_t)WSSFM1XRX_SEND_MESSAGE_TIME_DELAY_RESP; /*WSSFM1XRX_DL_TIMEOUT*/
-	if(CopyDataTx != NULL ) {
+	if( NULL != CopyDataTx ) {
 		(void)memcpy(CopyDataTx,UplinkPayload,WSSFM1XRX_MAX_DATA_SIZE_WITH_DL);
 	}
 	return WSSFM1XRX_SendRawMessage(obj, UplinkPayload, "OK", NULL, Wait, timeWait);
@@ -562,7 +557,7 @@ void WSSFM1XRX_ISRRX(WSSFM1XRXConfig_t *obj, const char RxChar){
 		obj->RxIndex=0; 
 	}
 	obj->RxFrame[obj->RxIndex] = (char)0;
-	if (RxChar =='\r'){
+	if( '\r' == RxChar ){
 		/*  Check if there is a downlink request */
 		if((uint8_t)SF_FALSE == obj->DownLink){
 			obj->RxIndex = 0;
@@ -589,14 +584,15 @@ void WSSFM1XRX_ISRRX(WSSFM1XRXConfig_t *obj, const char RxChar){
 WSSFM1XRX_Return_t WSSFM1XRX_MatchResponse(WSSFM1XRXConfig_t *obj, char *expectedResponse){
 	WSSFM1XRX_Return_t Rprocess = WSSFM1XRX_RSP_NOMATCH;
 	if((bool)obj->RxReady){
-		if(expectedResponse != NULL){
-			if(strstr((const char *) obj->RxFrame,(char *)expectedResponse) != NULL) {
-				 Rprocess = WSSFM1XRX_OK_RESPONSE;
+		if( NULL != expectedResponse ){
+			if( NULL != strstr((const char *) obj->RxFrame,(char *)expectedResponse) ) {
+				Rprocess = WSSFM1XRX_OK_RESPONSE;
 			}
-			else {
+			else{
 				Rprocess = WSSFM1XRX_RSP_NOMATCH;
 			}
-		}else { 
+		}
+		else{ 
 			Rprocess = WSSFM1XRX_OK_RESPONSE;
 		}
 	}
@@ -620,21 +616,20 @@ WSSFM1XRX_DL_Return_t DL_DiscriminateDownLink(WSSFM1XRXConfig_t* obj){
 
 	if(NULL == payLoadHead){
 		return WSSFM1XRX_DL_HEAD_ERROR;
-        }
+    }
 	/* Check payload length */
 	payLoadTail = (uint8_t *)strstr((const char*)payLoadHead, "\r");
 
 	if(NULL == payLoadTail){
 		return WSSFM1XRX_DL_TAIL_ERROR;
-        }
-        payLoadTail[1] = (uint8_t)'\0';
-	if( (strlen((const char *)payLoadHead) - 1u) != WSSFM1XRX_DL_PAYLOAD_LENGTH){ /*probar*/
+    }
+    payLoadTail[1] = (uint8_t)'\0';
+	if( WSSFM1XRX_DL_PAYLOAD_LENGTH != (strlen((const char *)payLoadHead) - 1u) ){ /*probar*/
 		return WSSFM1XRX_DL_LENGTH_ERROR;
-        }
+    }
 	/* Convert frame to numeric values */
 	uint8_t i;
 	for( i = 0; i < (uint8_t)WSSFM1XRX_DL_PAYLOAD_SYZE; i++){
-
 		/* Copy byte strings an convert them to numbers */
 		(void)strncpy((char *)byteStr, (const char *)&payLoadHead[byteIndex], WSSFM1XRX_DL_BYTE_SIZE);/*probar*/
 		obj->DL_NumericFrame[i] = (uint8_t)strtol((const char *)byteStr, NULL, 16);
@@ -648,9 +643,9 @@ WSSFM1XRX_DL_Return_t DL_DiscriminateDownLink(WSSFM1XRXConfig_t* obj){
 
 /*Private Functions ********************************************************************************************************************************/
 static void WSSFM1XRX_StringTX(WSSFM1XRXConfig_t *obj, char* WSSFM1XRX_String){
-  int i =0;
-  while(WSSFM1XRX_String[i] != '\0' ) {          
-		 obj->TX_WSSFM1XRX(NULL,WSSFM1XRX_String[i++]);
+  	int i =0;
+  	while( '\0' != WSSFM1XRX_String[i]  ) {          
+		obj->TX_WSSFM1XRX(NULL,WSSFM1XRX_String[i++]);
 	}
 }
 
@@ -695,7 +690,7 @@ static void WSSFM1XRX_BuildFrame(char* str, void* data, uint8_t size){
  */
 static WSSFM1XRX_Return_t WSSFM1XRX_WaitForResponse(WSSFM1XRXConfig_t *obj , char *ExpectedResponse, WSSFM1XRX_WaitMode_t Wait ,uint32_t msec){
 	WSSFM1XRX_Return_t retvalue;
-        WSSFM1XRX_Return_t retvalueM ;  /*= WSSFM1XRX_NONE;*/
+    WSSFM1XRX_Return_t retvalueM ;  /*= WSSFM1XRX_NONE;*/
 	retvalue =  Wait(obj,msec); /*Return WAITING or TIMEOUT*/
 	retvalueM = WSSFM1XRX_MatchResponse(obj,ExpectedResponse); /*Return Response ok or No match*/
 	return (retvalueM == WSSFM1XRX_OK_RESPONSE)? retvalueM  : retvalue  ;/*Delay NonBlocking or Non-blocking*/
@@ -706,9 +701,9 @@ static WSSFM1XRX_Return_t WSSFM1XRX_WaitForResponse(WSSFM1XRXConfig_t *obj , cha
 
 char NibbletoX(uint8_t value){
 	char ch;
-        uint8_t c_h;
+    uint8_t c_h;
 	c_h = (value & (uint8_t)0x0Fu) + (uint8_t)'0' ;
-        ch = (char)c_h;
+    ch = (char)c_h;
 	return (ch > (char)'9')? (ch + 7) : ch;
 }
 
@@ -726,9 +721,9 @@ char NibbletoX(uint8_t value){
  */
 WSSFM1XRX_Return_t WSSFM1XRX_GetRespNoexpected(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait, char * CommandStr, char *BuffStr){
 	WSSFM1XRX_Return_t RetValue;
-        bool RxReady_nonvolatile ; /* asignar obj->ready no actualiza en test*/
+    bool RxReady_nonvolatile; /* asignar obj->ready no actualiza en test*/
 
-	if( ( obj->State_Api == WSSFM1XRX_IDLE) ) { /*Firstentry block or Nonblocking*/
+	if( ( WSSFM1XRX_IDLE == obj->State_Api ) ) { /*Firstentry block or Nonblocking*/
 		WSSFM1XRX_ResetObject(obj);
 		WSSFM1XRX_StringTX(obj,CommandStr);
 		obj->State_Api = WSSFM1XRX_RUNNING;
@@ -738,13 +733,14 @@ WSSFM1XRX_Return_t WSSFM1XRX_GetRespNoexpected(WSSFM1XRXConfig_t *obj,WSSFM1XRX_
 	
 	if( (WSSFM1XRX_TIMEOUT == RetValue) || ((RetValue == WSSFM1XRX_WAITING) && ( RxReady_nonvolatile )  ) ){
 		if( RxReady_nonvolatile ){  
-                  if( BuffStr != NULL ) {
-                    (void)strcpy((char*)BuffStr, (char*)obj->RxFrame) ; /*frame stored in RxFrame*/ 
-                  }
-		RetValue = WSSFM1XRX_OK_RESPONSE;
-		}else {
-                  RetValue = WSSFM1XRX_FAILURE;
-                }
+            if( NULL != BuffStr ) {
+            	(void)strcpy((char*)BuffStr, (char*)obj->RxFrame) ; /*frame stored in RxFrame*/ 
+            }
+			RetValue = WSSFM1XRX_OK_RESPONSE;
+		}
+		else{
+            RetValue = WSSFM1XRX_FAILURE;
+        }
 		obj->State_Api = WSSFM1XRX_IDLE;
 	}
 	return RetValue;
