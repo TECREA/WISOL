@@ -183,7 +183,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_WakeUP(WSSFM1XRXConfig_t *obj ,WSSFM1XRX_WaitMode_t
 	static WSSFM1XRX_Return_t RetValue = WSSFM1XRX_NONE;
 	static WSSFM1XRX_Return_t RetValueAux = WSSFM1XRX_NONE;  
 	if( WSSFM1XRX_NONE ==  RetValueAux ) {
-		//obj->RST(SF_FALSE);
+		/*obj->RST(SF_FALSE);*/
 		obj->WKUP(SF_FALSE);
 		RetValueAux = WSSFM1XRX_WAITING;
 	}
