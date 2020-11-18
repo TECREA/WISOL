@@ -2,8 +2,8 @@
  * *******************************************************************************
  * @file WSSFM1XRX.h
  * @author julian bustamante
- * @version 1.4.6
- * @date Jul 17 , 2020
+ * @version 1.5.6
+ * @date Nov 18 , 2020
  * @brief Sigfox interface for the sigfox module. Interface
  * specific for module wisol SFM11R2D.
  *********************************************************************************/
@@ -16,7 +16,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#define WSSFM1XRX_VERSION    	"1.4.6"
+#define WSSFM1XRX_VERSION    	"1.5.6"
 #define WSSFM1XRX_CAPTION     	"WSSFM1XRX " WSSFM1XRX_VERSION
 
 /*BOOL VALUES*/
@@ -321,10 +321,10 @@ WSSFM1XRX_Return_t WSSFM1XRX_Sleep(WSSFM1XRXConfig_t *obj ,WSSFM1XRX_WaitMode_t 
 /**
  * @brief Function wakeup from pin extern the Wisol module.
  * @param obj Structure containing all data from the Wisol module.
- * @param Wait Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
+ * @param Wait Pointer to function delay blocking of type WSSFM1XRX_WaitMode_t
  * @return Operation result in the form WSSFM1XRX_Return_t.
  */
-WSSFM1XRX_Return_t WSSFM1XRX_WakeUP(WSSFM1XRXConfig_t *obj,WSSFM1XRX_WaitMode_t Wait  );
+WSSFM1XRX_Return_t WSSFM1XRX_WakeUP(WSSFM1XRXConfig_t *obj );
 
 /**
  * @brief Function reset the Wisol module.
