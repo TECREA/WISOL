@@ -2,8 +2,8 @@
  * *******************************************************************************
  * @file WSSFM1XRX.c
  * @author julian bustamante
- * @version 1.4.6
- * @date Jul 17 , 2020
+ * @version 1.5.6
+ * @date Nov 18 , 2020
  * @brief Sigfox interface for the sigfox module. Interface
  * specific for module wisol SFM11R2D.
  *********************************************************************************/
@@ -175,18 +175,18 @@ WSSFM1XRX_Return_t WSSFM1XRX_Sleep(WSSFM1XRXConfig_t *obj ,WSSFM1XRX_WaitMode_t 
  * @note Example :
  * 		WSSFM1XRX_WakeUP(&SigfoxModule,Wait);
  * @param obj Structure containing all data from the Wisol module.
- * @param Wait Pointer to function delay blocking or non blocking, of type WSSFM1XRX_WaitMode_t
+ * @param Wait Pointer to function delay blocking  of type WSSFM1XRX_WaitMode_t
  * @return void.
  */
-WSSFM1XRX_Return_t WSSFM1XRX_WakeUP(WSSFM1XRXConfig_t *obj ,WSSFM1XRX_WaitMode_t Wait  ) {
+WSSFM1XRX_Return_t WSSFM1XRX_WakeUP(WSSFM1XRXConfig_t *obj) {
 	static WSSFM1XRX_Return_t RetValue = WSSFM1XRX_NONE;
 	static WSSFM1XRX_Return_t RetValueAux = WSSFM1XRX_NONE;  
 	if( WSSFM1XRX_NONE ==  RetValueAux ) {
-		/*obj->RST(SF_FALSE);*/
+		obj->RST(SF_FALSE);
 		obj->WKUP(SF_FALSE);
 		RetValueAux = WSSFM1XRX_WAITING;
 	}
-	RetValue =  Wait(obj,WSSFM1XRX_WAKEUP_TIME_DELAY_PULSE); /*Return WAITING or TIMEOUT*/
+	RetValue =  WSSFM1XRX_Wait_Block(obj, WSSFM1XRX_WAKEUP_TIME_DELAY_PULSE); /*Return WAITING or TIMEOUT*/
 
 	if( WSSFM1XRX_TIMEOUT == RetValue ){
 		obj->RST(SF_TRUE);
@@ -194,6 +194,7 @@ WSSFM1XRX_Return_t WSSFM1XRX_WakeUP(WSSFM1XRXConfig_t *obj ,WSSFM1XRX_WaitMode_t
 		RetValueAux = WSSFM1XRX_NONE;
 	}
 	/*Wait after exit low-power mode*/
+	RetValue =  WSSFM1XRX_Wait_Block(obj, WSSFM1XRX_WAKEUP_WAIT_TIME_DELAY_RESP); /*Return WAITING or TIMEOUT*/
 	return  RetValue;
 }
 
