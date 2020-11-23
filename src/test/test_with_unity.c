@@ -60,7 +60,7 @@ void test_sigfox_reset_module(){
 
 void test_sigfox_wakeup(){
     WSSFM1XRX_Return_t RetValue; 
-    RetValue = WSSFM1XRX_WakeUP( &Driver_WSS, WSSFM1XRX_Wait_Block );
+    RetValue = WSSFM1XRX_WakeUP( &Driver_WSS );
     TEST_ASSERT_EQUAL_INT32(WSSFM1XRX_TIMEOUT,RetValue);
 }
 
